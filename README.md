@@ -1,3 +1,93 @@
+# pi-gen-btpeer
+
+This is a fork of https://github.com/RPi-Distro/pi-gen, the repository used to
+make official Raspberry Pi system images, with customizations made to build
+OS images for Raspberry Pi ChromeOS bluetooth peripheral devices (btpeers) in
+wificell testbeds.
+
+The image is based on the Raspberry Pi lite image and uses the following stages:
+
+1. `stage0` - Raspberry Pi lite stage, unchanged (see below for details)
+2. `stage1` - Raspberry Pi lite stage, unchanged (see below for details)
+3. `stage2` - Raspberry Pi lite stage, unchanged (see below for details)
+4. `stage6-btpeer` - ChromeOS btpeer image customizations (see [stage6-btpeer/README.md](./stage6-btpeer/README.md))
+
+This code is not meant to be included in Chrome or ChromeOS images in any way,
+and only used in test environments.
+
+## Dependencies
+
+In additional to the official Dependencies section below, make sure you have
+Docker configured on your device so that the docker container can be made.
+
+## Building Raspberry Pi OS images for ChromeOS btpeers
+
+Run `./build-docker-cros.sh` to build the image. It will generate the config
+files as per the below pi-gen documentation, then run `./build-docker.sh` to
+configure the docker container and run the `./build.sh` script within it.
+
+```text
+./build-docker-cros.sh
+```
+
+The build can take about 30 minutes. Afterwards, it will copy the built image
+from the docker container to `./deploy`.
+
+### Customizing the build
+
+By default, the docker container (named `pigen_work`) is deleted once the build
+finishes. During development, it is much faster to just reuse the container and
+re-run the build stages on top of it. This can be done like so:
+
+```text
+CONTINUE=1 \
+PRESERVE_CONTAINER=1 \
+./build-docker-cros.sh
+```
+
+When the docker container is preserved, you can enter it with
+
+```text
+./enter-docker-container.sh
+```
+
+and delete it with
+
+```text
+docker rm -v pigen_work
+```
+
+If you are testing changes to the btpeer stage, you can include
+`BTPEER_STAGE_ONLY=1` to skip the first two build stages that likely do not need
+to be rerun:
+
+```text
+BTPEER_STAGE_ONLY=1 \
+CONTINUE=1 \
+PRESERVE_CONTAINER=1 \
+./build-docker-cros.sh
+```
+
+If you are not ready to build the image and just trying to run the stages in the
+docker container, you can add `EXPORT_IMAGE=0` to skip the image export and same
+some time.
+
+```text
+EXPORT_IMAGE=0 \
+BTPEER_STAGE_ONLY=1 \
+CONTINUE=1 \
+PRESERVE_CONTAINER=1 \
+./build-docker-cros.sh
+```
+
+See `./build-docker-cros.sh` for more details.
+
+--------------------------------------------------------------------------------
+
+_Below is the upstream pi-gen README.md_
+
+--------------------------------------------------------------------------------
+
 # pi-gen
 
 Tool used to create Raspberry Pi OS images, and custom images based on Raspberry Pi OS,
