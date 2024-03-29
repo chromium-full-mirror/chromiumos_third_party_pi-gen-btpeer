@@ -1,0 +1,11 @@
+[Unit]
+Description=ChromeOS btpeerd service for managing btpeers
+
+[Service]
+User=root
+WorkingDirectory=/etc/chromiumos/src/platform/btpeerd
+ExecStart=/etc/chromiumos/src/platform/btpeerd/go/bin/btpeerd
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

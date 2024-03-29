@@ -30,3 +30,8 @@ Note: This does NOT utilize the chameleond makefile install process.
 
 Downloads the current audio test data bundle from GCS and extracts it to the
 rootfs of the image. These files are used by Tauto bluetooth audio tests.
+
+### 04-btpeerd
+
+Copies btpeerd source and service config to rootfs, compiles the go code to make
+the binary used as the service in the chroot, and enables the service.
