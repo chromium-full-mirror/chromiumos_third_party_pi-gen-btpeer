@@ -25,3 +25,8 @@ Extracts the chameleond bundle into rootfs, prepares a python venv for it, and
 configures its systemd services.
 
 Note: This does NOT utilize the chameleond makefile install process.
+
+### 03-audio-test-data
+
+Downloads the current audio test data bundle from GCS and extracts it to the
+rootfs of the image. These files are used by Tauto bluetooth audio tests.
