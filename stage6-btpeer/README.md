@@ -18,3 +18,10 @@ Configures core systems to allow the device to work in a lab environment.
 * Sets default `root` user password for local access and to avoid warnings about it being unset.
 * Disables wifi service, as btpeers do not ever use wifi.
 * Includes utility packages for remote debugging (e.g. `vim`).
+
+### 02-chameleond
+
+Extracts the chameleond bundle into rootfs, prepares a python venv for it, and
+configures its systemd services.
+
+Note: This does NOT utilize the chameleond makefile install process.

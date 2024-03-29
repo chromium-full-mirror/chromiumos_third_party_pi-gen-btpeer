@@ -87,6 +87,24 @@ export CHROMIUMOS_DOCKER_DIR
 " > "${DIR}/config"
 
 
+# compile_chameleond will make chameleond in the ChromeOS chroot so that it
+# creates a new chameleond bundle.
+function package_chameleond {
+  echo "Packaging chameleond in ChromeOS chroot (can be skipped with PACKAGE_CHAMELEOND=0)"
+  (cd "${CHROMIUMOS_DIR}" && \
+  cros_sdk \
+  --working-dir '/mnt/host/source/src/platform/chameleon' \
+  make
+  CHAMELEON_COMMIT=$(cat "${CHROMIUMOS_DIR}/src/platform/chameleon/dist/commit"))
+  echo "Successfully packaged chameleond in ChromeOS chroot at chameleon commit ${CHAMELEON_COMMIT}"
+}
+
+# Package dependent ChromeOS projects like normal.
+PACKAGE_CHAMELEOND="${PACKAGE_CHAMELEOND:-1}"
+if [ "${PACKAGE_CHAMELEOND}" -eq 1 ]; then
+  package_chameleond
+fi
+
 # Run normal raspi docker build script, passing all args.
 echo "Building Raspberry Pi image for btpeer"
 "${BUILD_DOCKER_SCRIPT}" $@

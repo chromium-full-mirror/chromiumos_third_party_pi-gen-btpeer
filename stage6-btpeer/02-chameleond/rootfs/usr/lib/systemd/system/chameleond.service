@@ -1,0 +1,11 @@
+[Unit]
+Description=ChromeOS chameleond service for btpeers
+
+[Service]
+User=root
+WorkingDirectory=/etc/chromiumos/src/platform/chameleon
+ExecStart=/bin/bash /etc/chromiumos/src/platform/chameleon/utils/run_chameleond_venv.sh
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

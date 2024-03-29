@@ -80,7 +80,27 @@ PRESERVE_CONTAINER=1 \
 ./build-docker-cros.sh
 ```
 
+Other options:
+* `CHROMIUMOS_DIR='/path/to/your/chromiumos'` - Path to chromiumos checkout to
+mount to `/chromiumos` in the docker container. Defaults to this checkout (`../../..`).
+* `PACKAGE_CHAMELEOND=0` - Skips creating the chameleond bundle.
+
 See `./build-docker-cros.sh` for more details.
+
+### Key directories in docker container
+
+* `/chromiumos` - A mount of the base chromiumos checkout dir.
+* `/pi-gen` - Copy of this repo, synced on build.
+* `/pi-gen/work` - Stage working directories
+* `/pi-gen/work/raspios-cros/stage6-btpeer/rootfs` - The rootfs dir of
+`stage6-btpeer`, which will reflect the filesystem of the exported image once
+installed.
+
+## Related ChromeOS projects
+
+* [chromiumos/platform/chameleon](https://chromium.googlesource.com/chromiumos/platform/chameleon/) - `chameleond` service, used as bluez bluetooth stack API
+* [chromiumos/platform/btsocket](https://chromium.googlesource.com/chromiumos/platform/btsocket/) - `btsocket` python library used by `chameleond`
+* [chromiumos/platform/btpeerd](https://chromium.googlesource.com/chromiumos/platform/btpeerd/) - `btpeerd` service for managing btpeers
 
 --------------------------------------------------------------------------------
 
