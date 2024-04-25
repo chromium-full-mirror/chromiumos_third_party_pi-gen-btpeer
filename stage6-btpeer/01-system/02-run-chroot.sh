@@ -6,3 +6,6 @@
 
 # Set default root password to standard test password (not allowed in SSH, just for local access).
 echo "root:test0000" | chpasswd
+
+# Enable firewall (config file customized in rootfs/etc/nftables.conf)
+systemctl enable nftables.service

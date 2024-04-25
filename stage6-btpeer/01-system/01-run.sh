@@ -6,6 +6,7 @@
 
 echo "Copying sub-stage 01-system files to rootfs"
 rsync -a rootfs/* "${ROOTFS_DIR}"
+chmod 644 "${ROOTFS_DIR}/boot/firmware/config.txt"
 
 # Start building the build info JSON file.
 # The data format is defined as RaspiosCrosBtpeerImageBuildInfo in the proto
