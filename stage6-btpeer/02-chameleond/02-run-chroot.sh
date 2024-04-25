@@ -29,7 +29,10 @@ echo "Successfully created venv for chameleond at '${CHAMELEOND_VENV}'"
 # Link chameleond python source root for run script.
 ln -s "${CHAMELEOND_DIR}/chameleond" "${CHAMELEOND_DIR}/utils/chameleond"
 
-# Enable systemd service.
+# Generate systemd service from init.d service.
+update-rc.d chameleond defaults 92 8
+
+# Enable generated systemd service.
 systemctl enable chameleond.service
 
 # Add legacy package path support by linking packages now in /usr/ to /usr/local/

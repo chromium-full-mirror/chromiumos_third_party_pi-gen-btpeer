@@ -18,6 +18,7 @@ BUILD_INFO_JSON='{}'
 BUILD_INFO_JSON=$(jq '."image_uuid" = $val' --arg val "${IMAGE_UUID}" <<< "${BUILD_INFO_JSON}")
 BUILD_INFO_JSON=$(jq '."image_build_time" = $val' --arg val "${IMAGE_TIMESTAMP}" <<< "${BUILD_INFO_JSON}")
 BUILD_INFO_JSON=$(jq '."sources"."https://chromium.googlesource.com/chromiumos/third_party/pi-gen-btpeer" = $val' --arg val "${PI_GEN_COMMIT}" <<< "${BUILD_INFO_JSON}")
+mkdir -p $(dirname "${ROOTFS_DIR}/${BUILD_INFO_FILE_PATH}")
 echo "${BUILD_INFO_JSON}" > "${ROOTFS_DIR}/${BUILD_INFO_FILE_PATH}"
 echo -e "Current Build info:\n${BUILD_INFO_JSON}"
 
