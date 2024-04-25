@@ -96,6 +96,41 @@ See `./build-docker-cros.sh` for more details.
 `stage6-btpeer`, which will reflect the filesystem of the exported image once
 installed.
 
+## Installing a new image onto a btpeer
+
+There a few different ways you can install one of the built images onto a btpeer,
+but essentially they all flash the SD card on the Raspberry Pi with the image binary
+emitted by pi-gen.
+
+Note: See above for instructions on how to build an image if you do not have one.
+
+### Option 1: Physically flash the SD card using another device
+
+Requires an image, physical access to the btpeer, an SD card reader/writer, and a dev machine
+capable of using that reader/writer.
+
+1. Power off btpeer, remove SD card from btpeer, and reconnect SD card to dev machine via SD card reader/writer.
+2. Identify the SD card device name on your system.
+3. **Double-check you've identified the right device**. You can brick your dev machine if you mix it up with one of your main disks.
+4. Unmount any mounted partitions of the device.
+5. Use `dd` to flash image to device. Can either use`gunzip` with the compressed binary or extracting it first and passing it to `dd`.
+6. Reinstall SD card in btpeer and power it on.
+
+From compressed image `*.img.gz`:
+```bash
+gunzip -c "image_2024-04-03-raspios-cros-btpeer.img.gz" | dd of="/dev/{SD_CARD_DEVICE}" bs=64k oflag=dsync status=progress
+```
+
+From uncompressed image `*.img`
+```bash
+dd if="image_2024-04-03-raspios-cros-btpeer.img"  of="/dev/{SD_CARD_DEVICE}" bs=64k oflag=dsync status=progress
+```
+
+### Option 2: Remotely reimage with PARIS
+
+TODO(jstanko)
+
+
 ## Related ChromeOS projects
 
 * [chromiumos/platform/chameleon](https://chromium.googlesource.com/chromiumos/platform/chameleon/) - `chameleond` service, used as bluez bluetooth stack API
