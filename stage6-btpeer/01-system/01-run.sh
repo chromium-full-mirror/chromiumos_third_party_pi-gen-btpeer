@@ -7,6 +7,19 @@
 echo "Copying sub-stage 01-system files to rootfs"
 rsync -a rootfs/* "${ROOTFS_DIR}"
 
+# Start building the build info JSON file.
+# The data format is defined as RaspiosCrosBtpeerImageBuildInfo in the proto
+# chromiumos/src/config/proto/chromiumos/test/lab/api/bluetooth_peer.proto.
+echo "Initializing build info"
+IMAGE_UUID=$(uuidgen)
+IMAGE_TIMESTAMP=$(date --utc +%FT%T.%NZ)
+BUILD_INFO_JSON='{}'
+BUILD_INFO_JSON=$(jq '."image_uuid" = $val' --arg val "${IMAGE_UUID}" <<< "${BUILD_INFO_JSON}")
+BUILD_INFO_JSON=$(jq '."image_build_time" = $val' --arg val "${IMAGE_TIMESTAMP}" <<< "${BUILD_INFO_JSON}")
+BUILD_INFO_JSON=$(jq '."sources"."https://chromium.googlesource.com/chromiumos/third_party/pi-gen-btpeer" = $val' --arg val "${PI_GEN_COMMIT}" <<< "${BUILD_INFO_JSON}")
+echo "${BUILD_INFO_JSON}" > "${ROOTFS_DIR}/${BUILD_INFO_FILE_PATH}"
+echo -e "Current Build info:\n${BUILD_INFO_JSON}"
+
 # Build ssh banner with system details:
 ROOTFS_SSH_BANNER_FILE="${ROOTFS_DIR}/etc/btpeer/ssh_banner.txt"
 mkdir -p "$(dirname "${ROOTFS_SSH_BANNER_FILE}")"
@@ -14,6 +27,7 @@ echo "
 ------------------------------------------------------------
 ChromeOS Test Btpeer
  * Device: Raspberry Pi
+ * ImageUUID: ${IMAGE_UUID}
 ------------------------------------------------------------
 " > "${ROOTFS_SSH_BANNER_FILE}"
 
@@ -21,13 +35,3 @@ ChromeOS Test Btpeer
 CHROMIUMOS_TESTING_RSA_PUB_KEY_PATH="${CHROMIUMOS_DOCKER_DIR}/src/third_party/chromiumos-overlay/chromeos-base/chromeos-ssh-testkeys/files/testing_rsa.pub"
 mkdir -p "${ROOTFS_DIR}/root/.ssh"
 cp "${CHROMIUMOS_TESTING_RSA_PUB_KEY_PATH}" "${ROOTFS_DIR}/root/.ssh/authorized_keys"
-
-# Set default root password to standard test password (not allowed in SSH, just for local access).
-on_chroot << EOF
-echo "root:test0000" | chpasswd
-EOF
-
-# Disable wifi to reduce noise in wificell. We only connect to btpeer over ethernet or bluetooth.
-on_chroot << EOF
-systemctl disable wpa_supplicant
-EOF

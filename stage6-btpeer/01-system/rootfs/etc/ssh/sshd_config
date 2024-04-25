@@ -11,7 +11,7 @@
 LogLevel INFO
 
 # Include our generated ssh banner with device and image info.
-# Banner /etc/btpeer/ssh_banner.txt
+Banner /etc/btpeer/ssh_banner.txt
 
 # Allow for many ssh sessions at once, as tests configure device and collect
 # logs over ssh.

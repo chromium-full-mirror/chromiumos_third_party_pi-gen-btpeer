@@ -14,6 +14,10 @@ set -e
 DIR="$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)"
 BUILD_DOCKER_SCRIPT="${DIR}/build-docker.sh"
 
+# Prepare basic build info.
+BUILD_INFO_FILE_PATH="/etc/chromiumos/raspios_cros_btpeer_build_info.json"
+PI_GEN_COMMIT=$(git rev-parse --short HEAD)
+
 # Only build btpeer images, and when specified.
 touch "${DIR}/stage2/SKIP_IMAGES" # Never build normal raspi lite images.
 EXPORT_IMAGE="${EXPORT_IMAGE:-1}"
@@ -84,6 +88,10 @@ DISABLE_FIRST_BOOT_USER_RENAME=1
 # Custom variables for scripts.
 CHROMIUMOS_DOCKER_DIR='${CHROMIUMOS_DOCKER_DIR}'
 export CHROMIUMOS_DOCKER_DIR
+BUILD_INFO_FILE_PATH='${BUILD_INFO_FILE_PATH}'
+export BUILD_INFO_FILE_PATH
+PI_GEN_COMMIT='${PI_GEN_COMMIT}'
+export PI_GEN_COMMIT
 " > "${DIR}/config"
 
 
