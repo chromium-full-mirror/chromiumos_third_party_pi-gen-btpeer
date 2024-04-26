@@ -10,7 +10,7 @@ CHROMIUMOS_CONFIG_DIR="/etc/chromiumos/src/config"
 
 # Compile btpeerd with local go compiler.
 echo "Compiling btpeerd executable from go source"
-"${BTPEERD_DIR}/scripts/build_local.sh"
+"${BTPEERD_DIR}/scripts/build.sh"
 if [ ! -x "${BTPEERD_EXE_PATH}" ]; then
   echo "Error: btpeerd executable not found at '${BTPEERD_EXE_PATH}'"
   exit 1
