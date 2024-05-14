@@ -7,8 +7,7 @@
 BTPEERD_SRC_DOCKER_DIR="${CHROMIUMOS_DOCKER_DIR}/src/platform/btpeerd"
 
 echo "Checking the state of the ChromeOS btpeerd source"
-git config --global --add safe.directory "${BTPEERD_SRC_DOCKER_DIR}"
-BTPEERD_COMMIT=$(cd "${BTPEERD_SRC_DOCKER_DIR}" && git rev-parse --short HEAD)
+BTPEERD_COMMIT=$(cd "${BTPEERD_SRC_DOCKER_DIR}" && git config --global --add safe.directory "${BTPEERD_SRC_DOCKER_DIR}" && git rev-parse --short HEAD)
 if ! $(cd "${BTPEERD_SRC_DOCKER_DIR}" && git diff-index --quiet HEAD --); then
   echo "Error: local checkout of btpeerd has uncommitted changes"
   exit 1
@@ -29,8 +28,7 @@ echo "Successfully copied ChromeOS btpeerd source to rootfs"
 
 echo "Copying ChromeOS config generated go code to rootfs"
 CHROMIUMOS_CONFIG_DOCKER_DIR="${CHROMIUMOS_DOCKER_DIR}/src/config"
-git config --global --add safe.directory "${CHROMIUMOS_CONFIG_DOCKER_DIR}"
-CHROMIUMOS_CONFIG_COMMIT=$(cd "${CHROMIUMOS_CONFIG_DOCKER_DIR}" && git rev-parse --short HEAD)
+CHROMIUMOS_CONFIG_COMMIT=$(cd "${CHROMIUMOS_CONFIG_DOCKER_DIR}" && git config --global --add safe.directory "${CHROMIUMOS_CONFIG_DOCKER_DIR}" && git rev-parse --short HEAD)
 CHROMIUMOS_CONFIG_GO_SRC_DOCKER_DIR="${CHROMIUMOS_CONFIG_DOCKER_DIR}/go"
 CHROMIUMOS_CONFIG_GO_ROOTFS_DIR="${ROOTFS_DIR}/etc/chromiumos/src/config/go"
 if [ -d "${CHROMIUMOS_CONFIG_GO_ROOTFS_DIR}" ]; then

@@ -38,8 +38,7 @@ echo "Successfully extracted chameleond bundle to rootfs at ${CHAMELEOND_ROOTFS_
 
 # Copy btsocket source to rootfs (installed into venv via requirements.txt, then source is deleted).
 BTSOCKET_SRC_DOCKER_DIR="${CHROMIUMOS_DOCKER_DIR}/src/platform/btsocket"
-git config --global --add safe.directory "${BTSOCKET_SRC_DOCKER_DIR}"
-BTSOCKET_COMMIT=$(cd "${BTSOCKET_SRC_DOCKER_DIR}" && git rev-parse --short HEAD)
+BTSOCKET_COMMIT=$(cd "${BTSOCKET_SRC_DOCKER_DIR}" && git config --global --add safe.directory "${BTSOCKET_SRC_DOCKER_DIR}" && git rev-parse --short HEAD)
 BTSOCKET_ROOTFS_DIR="${ROOTFS_DIR}/etc/chromiumos/src/platform/btsocket"
 echo "Copying ChromeOS btsocket source to rootfs"
 mkdir -p "${BTSOCKET_ROOTFS_DIR}"
