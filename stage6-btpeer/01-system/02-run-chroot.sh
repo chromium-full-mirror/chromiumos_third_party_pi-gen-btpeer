@@ -9,3 +9,6 @@ echo "root:test0000" | chpasswd
 
 # Enable firewall (config file customized in rootfs/etc/nftables.conf)
 systemctl enable nftables.service
+
+TESTING_RSA_PRI_KEY_PATH="/root/.ssh/testing_rsa"
+chmod 0600 ${TESTING_RSA_PRI_KEY_PATH}
