@@ -17,7 +17,6 @@ pavucontrol
 playerctl
 libssl-dev
 libbluetooth-dev
-pipewire
 i2c-tools
 libpulse-dev
 memtool
