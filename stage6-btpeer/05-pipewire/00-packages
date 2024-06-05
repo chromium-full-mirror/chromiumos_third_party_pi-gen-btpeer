@@ -2,3 +2,4 @@ meson
 libdbus-1-dev
 libsbc-dev
 libsndfile-dev
+liblc3-dev

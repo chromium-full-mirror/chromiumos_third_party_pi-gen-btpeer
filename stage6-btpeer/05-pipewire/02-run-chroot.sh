@@ -10,7 +10,7 @@ apt remove -y pipewire-bin
 # Build the pipewire from source
 PIPEWIRE_SRC_ROOTFS_DIR="/etc/chromiumos/src/third_party/pipewire"
 (cd ${PIPEWIRE_SRC_ROOTFS_DIR} && ./autogen.sh --prefix=/usr &&
-meson setup --wipe -Dbluez5=enabled -Dsndfile=enabled -Dpw-cat=enabled builddir &&
+meson setup --wipe -Dbluez5=enabled -Dbluez5-codec-lc3=enabled -Dsndfile=enabled -Dpw-cat=enabled builddir &&
 make &&
 make install)
 
