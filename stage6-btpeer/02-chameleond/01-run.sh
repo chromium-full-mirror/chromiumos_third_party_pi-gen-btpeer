@@ -34,6 +34,9 @@ cp "${CHAMELEOND_ROOTFS_DIR}/chameleond/utils/btkbservice.conf" "${ROOTFS_DIR}/e
 WIREPLUMBER_CONFIG_DIR="${ROOTFS_DIR}/home/pi/.config/wireplumber/"
 install -v -o 1000 -g 1000 -d "${WIREPLUMBER_CONFIG_DIR}"
 rsync --chown=1000:1000 -a "${CHAMELEOND_ROOTFS_DIR}/updatable/wireplumber/"* -d "${WIREPLUMBER_CONFIG_DIR}"
+PIPEWIRE_CONFIG_DIR="${ROOTFS_DIR}/etc/pipewire"
+install -v -o 1000 -g 1000 -d "${PIPEWIRE_CONFIG_DIR}"
+rsync --chown=1000:1000 -a "${CHAMELEOND_ROOTFS_DIR}/updatable/pipewire/"* -d "${PIPEWIRE_CONFIG_DIR}"
 echo "Successfully extracted chameleond bundle to rootfs at ${CHAMELEOND_ROOTFS_DIR}"
 
 # Copy btsocket source to rootfs (installed into venv via requirements.txt, then source is deleted).
