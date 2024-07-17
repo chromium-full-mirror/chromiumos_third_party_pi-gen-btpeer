@@ -31,9 +31,9 @@ mkdir -p "${CHAMELEOND_ROOTFS_DIR}"
 tar -zxf "${CHAMELEOND_BUNDLE_PATH}" --strip-components=1)
 echo "Copying chameleond bundle config files to system locations in rootfs"
 cp "${CHAMELEOND_ROOTFS_DIR}/chameleond/utils/btkbservice.conf" "${ROOTFS_DIR}/etc/dbus-1/system.d/org.chromium.autotest.btkbservice.conf"
-WIREPLUMBER_CONFIG_DIR="${ROOTFS_DIR}/home/pi/.config/bluetooth.lua.d"
-mkdir -p "${WIREPLUMBER_CONFIG_DIR}"
-cp "${CHAMELEOND_ROOTFS_DIR}/updatable/wireplumber/bluetooth.lua.d/"* "${WIREPLUMBER_CONFIG_DIR}"
+WIREPLUMBER_CONFIG_DIR="${ROOTFS_DIR}/home/pi/.config/wireplumber/"
+install -v -o 1000 -g 1000 -d "${WIREPLUMBER_CONFIG_DIR}"
+rsync --chown=1000:1000 -a "${CHAMELEOND_ROOTFS_DIR}/updatable/wireplumber/"* -d "${WIREPLUMBER_CONFIG_DIR}"
 echo "Successfully extracted chameleond bundle to rootfs at ${CHAMELEOND_ROOTFS_DIR}"
 
 # Copy btsocket source to rootfs (installed into venv via requirements.txt, then source is deleted).

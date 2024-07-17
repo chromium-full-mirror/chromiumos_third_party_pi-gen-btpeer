@@ -42,3 +42,6 @@ cp "${CHROMIUMOS_TESTING_RSA_PUB_KEY_PATH}" "${ROOTFS_DIR}/root/.ssh/authorized_
 CHROMIUMOS_TESTING_RSA_PRI_KEY_PATH="${CHROMIUMOS_DOCKER_DIR}/src/third_party/chromiumos-overlay/chromeos-base/chromeos-ssh-testkeys/files/testing_rsa"
 mkdir -p "${ROOTFS_DIR}/root/.ssh"
 cp "${CHROMIUMOS_TESTING_RSA_PRI_KEY_PATH}" "${ROOTFS_DIR}/root/.ssh/"
+
+# Create .config directory with the expected permissions/ownership if it doesn't already exist.
+install -v -o 1000 -g 1000 -d "${ROOTFS_DIR}/home/${FIRST_USER_NAME}/.config"
