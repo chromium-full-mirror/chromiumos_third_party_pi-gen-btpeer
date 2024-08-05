@@ -14,3 +14,5 @@ meson setup --wipe -Dbluez5=enabled -Dbluez5-codec-lc3=enabled -Dsndfile=enabled
 make &&
 make install)
 
+# Keep the user session login for pipewire
+sudo loginctl enable-linger pi
