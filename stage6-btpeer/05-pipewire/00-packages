@@ -3,3 +3,5 @@ libdbus-1-dev
 libsbc-dev
 libsndfile-dev
 liblc3-dev
+libbluetooth-dev
+libglib2.0-dev

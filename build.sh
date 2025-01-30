@@ -21,7 +21,7 @@ EOF
 			PACKAGES="$(sed -f "${SCRIPT_DIR}/remove-comments.sed" < "${i}-packages-nr")"
 			if [ -n "$PACKAGES" ]; then
 				on_chroot << EOF
-apt-get -o Acquire::Retries=3 install --no-install-recommends -y $PACKAGES
+apt-get install --no-install-recommends -y $PACKAGES
 EOF
 			fi
 			log "End ${SUB_STAGE_DIR}/${i}-packages-nr"
@@ -31,7 +31,7 @@ EOF
 			PACKAGES="$(sed -f "${SCRIPT_DIR}/remove-comments.sed" < "${i}-packages")"
 			if [ -n "$PACKAGES" ]; then
 				on_chroot << EOF
-apt-get -o Acquire::Retries=3 install -y $PACKAGES
+apt-get install -y $PACKAGES
 EOF
 			fi
 			log "End ${SUB_STAGE_DIR}/${i}-packages"
