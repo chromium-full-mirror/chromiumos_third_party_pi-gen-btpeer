@@ -39,6 +39,9 @@ do_start () {
     else
         echo "${DAEMON_NAME} is already running."
     fi
+
+    # Unblock bluetooth if it was blocked
+    rfkill unblock bluetooth
 }
 
 do_stop () {
