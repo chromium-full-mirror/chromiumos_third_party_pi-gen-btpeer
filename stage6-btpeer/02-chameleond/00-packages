@@ -21,3 +21,4 @@ i2c-tools
 libpulse-dev
 memtool
 pulseaudio
+pulseaudio-module-bluetooth
