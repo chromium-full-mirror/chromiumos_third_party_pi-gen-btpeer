@@ -35,6 +35,9 @@ update-rc.d chameleond defaults 92 8
 # Enable generated systemd service.
 systemctl enable chameleond.service
 
+# Add packages from chameleond/bin to usr/bin
+cp -a ${CHAMELEOND_DIR}/bin/. /usr/bin/
+
 # Add legacy package path support by linking packages now in /usr/ to /usr/local/
 USR_PACKAGES_TO_LINK_LOCAL=(
   sbin/i2cdump
