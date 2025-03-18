@@ -36,35 +36,28 @@ update-rc.d chameleond defaults 92 8
 systemctl enable chameleond.service
 
 # Add packages from chameleond/bin to usr/bin
-cp -a ${CHAMELEOND_DIR}/bin/. /usr/bin/
+cp -a "${CHAMELEOND_DIR}"/bin/. /usr/bin/
 
-# Add legacy package path support by linking packages now in /usr/ to /usr/local/
-USR_PACKAGES_TO_LINK_LOCAL=(
-  sbin/i2cdump
-  sbin/i2cget
-  sbin/i2cset
-  bin/pacat
-  bin/pactl
-  bin/pulseaudio
-)
-for PKG in ${USR_PACKAGES_TO_LINK_LOCAL[@]}; do
-  TARGET_PATH="/usr/${PKG}"
-  LINK_PATH="/usr/local/${PKG}"
-  echo "Linking '${LINK_PATH}' to '${TARGET_PATH}'"
-  if [ ! -L "${LINK_PATH}" ]; then
-      ln -s "${TARGET_PATH}" "${LINK_PATH}"
-  fi
-done
+# Setup Bluetooth GRPC service for chameleond
+PANDORA_STABLE_VERSION="0.0.6"
+PANDORA_EXPERIMENTAL_VERSION="0.0.0"
+BLUESHIP_VERSION="0.0.0"
 
-USR_PACKAGES_TO_LINK=(
-  modprobe
-)
+BLUETOOTH_GRPC_ROOT_DIR="${CHAMELEOND_DIR}/chameleond/tmp/bluetooth_grpc"
+PANDORA_DIR="${BLUETOOTH_GRPC_ROOT_DIR}/bt-test-interfaces-${PANDORA_STABLE_VERSION}"
+PANDORA_EXPERIMENTAL_DIR="${BLUETOOTH_GRPC_ROOT_DIR}/pandora-experimental-${PANDORA_EXPERIMENTAL_VERSION}"
+BLUESHIP_DIR="${BLUETOOTH_GRPC_ROOT_DIR}/blueship-${BLUESHIP_VERSION}"
 
-for PKG in ${USR_PACKAGES_TO_LINK[@]}; do
-  TARGET_PATH="/usr/sbin/${PKG}"
-  LINK_PATH="/usr/bin/${PKG}"
-  echo "Linking '${LINK_PATH}' to '${TARGET_PATH}'"
-  if [ ! -L "${LINK_PATH}" ]; then
-      ln -s "${TARGET_PATH}" "${LINK_PATH}"
-  fi
-done
+python3 -m grpc_tools.protoc \
+          -I"${PANDORA_DIR}" -I"${PANDORA_EXPERIMENTAL_DIR}" -I"${BLUESHIP_DIR}"\
+          --plugin=protoc-gen-grpc="${BLUETOOTH_GRPC_ROOT_DIR}"/protoc-gen-custom_grpc \
+          --python_out="${BLUETOOTH_GRPC_ROOT_DIR}"/python \
+          --grpc_out="${BLUETOOTH_GRPC_ROOT_DIR}"/python \
+          "${PANDORA_DIR}"/pandora/* \
+          "${PANDORA_EXPERIMENTAL_DIR}"/pandora_experimental/* \
+          "${BLUESHIP_DIR}"/blueship/*
+
+python3 -m pip install --upgrade "${BLUETOOTH_GRPC_ROOT_DIR}"
+cd "${CHAMELEOND_DIR}"
+# add --cyclone5 to ignore installation of cryptography(2.6.1 is too old for Python3.11), will be removed after setup.py changed
+python3 setup.py install -f --grpc --cyclone5 --install-scripts="${CHAMELEOND_DIR}"

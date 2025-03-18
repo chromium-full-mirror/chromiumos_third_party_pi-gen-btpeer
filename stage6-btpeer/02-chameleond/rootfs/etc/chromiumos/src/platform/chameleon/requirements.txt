@@ -2,3 +2,7 @@ git+https://github.com/pybluez/pybluez.git#egg=pybluez
 cryptography==42.0.5
 pyserial==3.4
 /etc/chromiumos/src/platform/btsocket
+
+google-api-python-client
+grpcio
+grpcio-tools
