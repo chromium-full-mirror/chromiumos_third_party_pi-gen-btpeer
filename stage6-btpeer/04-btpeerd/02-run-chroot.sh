@@ -22,3 +22,6 @@ systemctl enable btpeerd.service
 
 echo "Removing ChromeOS config generated go code from rootfs"
 rm -r "${CHROMIUMOS_CONFIG_DIR}"
+
+apt-get remove --purge golang-go
+apt-get autoremove
