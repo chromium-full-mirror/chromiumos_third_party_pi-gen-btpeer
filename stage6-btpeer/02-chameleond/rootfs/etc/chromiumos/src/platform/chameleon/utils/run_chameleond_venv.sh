@@ -17,6 +17,7 @@ fi
 PLATFORM='RASPI'
 export PLATFORM
 CHAMELEOND_ARGS=(
+  -v
   --driver fpga_tio
   platform=raspi
 )
