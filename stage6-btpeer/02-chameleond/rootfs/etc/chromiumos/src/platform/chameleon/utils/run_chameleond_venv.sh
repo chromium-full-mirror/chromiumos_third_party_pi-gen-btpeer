@@ -24,5 +24,6 @@ CHAMELEOND_ARGS=(
 # Start chameleond in venv.
 echo "Starting chameleond in venv"
 CHAMELEON_DIR='/etc/chromiumos/src/platform/chameleon'
+# shellcheck source=/dev/null
 source "${CHAMELEON_DIR}/venv/bin/activate"
-"${CHAMELEON_DIR}/utils/run_chameleond" ${CHAMELEOND_ARGS[@]}
+exec "${CHAMELEON_DIR}/utils/run_chameleond" "${CHAMELEOND_ARGS[@]}"

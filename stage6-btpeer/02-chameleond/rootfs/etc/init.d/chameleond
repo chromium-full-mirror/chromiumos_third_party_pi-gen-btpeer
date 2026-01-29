@@ -23,7 +23,8 @@ RETRY_PERIOD=1
 
 list_descendants ()
 {
-  local children=$(ps -o pid= --ppid "$1")
+  local children
+  children="$(ps -o pid= --ppid "$1")"
 
   for pid in ${children}
   do
@@ -54,12 +55,17 @@ do_start () {
 
 do_stop () {
     if is_already_running; then
-        PID="$(cat ${PIDFILE})"
+        PID="$(cat "${PIDFILE}")"
         CHILDREN=$(list_descendants "${PID}")
         start-stop-daemon --stop --pidfile "${PIDFILE}" --retry "${RETRY_PERIOD}" --remove-pidfile
         # Remove all subprocesses created from script
-        kill -9 "${CHILDREN}"
-        echo "kill all subprocesses ${CHILDREN}"
+        if [ -n "${CHILDREN}" ]; then
+            # CHILDREN contains a list of PIDs. We want to kill all of them,
+            # so we explicitly disable SC2086 to allow word splitting.
+            # shellcheck disable=SC2086
+            kill -9 ${CHILDREN}
+            echo "kill all subprocesses ${CHILDREN}"
+        fi
     else
         echo "${DAEMON_NAME} is already stopped"
     fi
@@ -73,7 +79,7 @@ do_status () {
 
 case "$1" in
     start|stop|status)
-        do_${1}
+        do_"${1}"
         ;;
 
     restart)
