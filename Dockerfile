@@ -1,7 +1,11 @@
+# Copyright 2026 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
 ARG BASE_IMAGE=debian:bullseye
 FROM ${BASE_IMAGE}
 
-ENV DEBIAN_FRONTEND noninteractive
+ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get -y update && \
     apt-get -y install --no-install-recommends \

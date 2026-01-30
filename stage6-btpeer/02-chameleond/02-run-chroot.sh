@@ -29,11 +29,16 @@ echo "Successfully created venv for chameleond at '${CHAMELEOND_VENV}'"
 # Link chameleond python source root for run script.
 ln -s "${CHAMELEOND_DIR}/chameleond" "${CHAMELEOND_DIR}/utils/chameleond"
 
+echo "Add chameleond and bluetooth grpc as service"
 # Generate systemd service from init.d service.
 update-rc.d chameleond defaults 92 8
+update-rc.d bluetooth_grpc defaults 100 6
 
 # Enable generated systemd service.
 systemctl enable chameleond.service
+systemctl enable bluetooth_grpc.service
+
+systemctl stop bluetooth_grpc.service
 
 # Add packages from chameleond/bin to usr/bin
 cp -a "${CHAMELEOND_DIR}"/bin/. /usr/bin/

@@ -5,8 +5,8 @@
 # found in the LICENSE file.
 
 # Copy chameleond source to rootfs.
-CHAMELEON_SRC_DOCKER_DIR="${CHROMIUMOS_DOCKER_DIR}/src/platform/chameleon"
-CHAMELEON_ROOTFS_DIR="${ROOTFS_DIR}/etc/chromiumos/src/platform/chameleon"
+CHAMELEON_SRC_DOCKER_DIR="${CHROMIUMOS_DOCKER_DIR:?}/src/platform/chameleon"
+CHAMELEON_ROOTFS_DIR="${ROOTFS_DIR:?}/etc/chromiumos/src/platform/chameleon"
 CHAMELEOND_PROJECT_DIST_DIR="${CHAMELEON_SRC_DOCKER_DIR}/dist"
 
 function prepare_bluetooth_grpc_chameleon {
@@ -71,7 +71,7 @@ mkdir -p "${CHAMELEON_ROOTFS_DIR}"
 (cd "${CHAMELEON_ROOTFS_DIR}" && \
 tar -zxf "${CHAMELEOND_BUNDLE_PATH}" --strip-components=1)
 echo "Copying chameleond bundle config files to system locations in rootfs"
-cp "${CHAMELEON_ROOTFS_DIR}/chameleond/utils/btkbservice.conf" "${ROOTFS_DIR}/etc/dbus-1/system.d/org.chromium.autotest.btkbservice.conf"
+cp "${CHAMELEON_ROOTFS_DIR}/chameleond/utils/btservice.conf" "${ROOTFS_DIR}/etc/dbus-1/system.d/org.chromium.autotest.btservice.conf"
 WIREPLUMBER_CONFIG_DIR="${ROOTFS_DIR}/home/pi/.config/wireplumber/"
 install -v -o 1000 -g 1000 -d "${WIREPLUMBER_CONFIG_DIR}"
 rsync --chown=1000:1000 -a "${CHAMELEON_ROOTFS_DIR}/updatable/wireplumber/"* -d "${WIREPLUMBER_CONFIG_DIR}"
@@ -90,7 +90,7 @@ rsync -a "${BTSOCKET_SRC_DOCKER_DIR}/" "${BTSOCKET_ROOTFS_DIR}/" --exclude .git 
 echo "Successfully copied ChromeOS btsocket source to rootfs"
 
 echo "Updating build info"
-BUILD_INFO_JSON=$(cat "${ROOTFS_DIR}/${BUILD_INFO_FILE_PATH}")
+BUILD_INFO_JSON=$(cat "${ROOTFS_DIR}/${BUILD_INFO_FILE_PATH:?}")
 BUILD_INFO_JSON=$(jq '."sources"."https://chromium.googlesource.com/chromiumos/platform/chameleon" = $val' --arg val "${CHAMELEON_COMMIT}" <<< "${BUILD_INFO_JSON}")
 BUILD_INFO_JSON=$(jq '."sources"."https://chromium.googlesource.com/chromiumos/platform/btsocket" = $val' --arg val "${BTSOCKET_COMMIT}" <<< "${BUILD_INFO_JSON}")
 echo "${BUILD_INFO_JSON}" > "${ROOTFS_DIR}/${BUILD_INFO_FILE_PATH}"

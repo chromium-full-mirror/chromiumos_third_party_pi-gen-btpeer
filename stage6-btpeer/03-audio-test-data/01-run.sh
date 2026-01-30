@@ -23,11 +23,11 @@ function get_latest_wbs_bundle_name() {
 
 function install_wbs_package() {
   WBS_PACKAGE_NAME=$(get_latest_wbs_bundle_name)
-  WBS_TARBALL="${ROOTFS_DIR}/${WBS_PACKAGE_NAME}"
+  WBS_TARBALL="${ROOTFS_DIR:?}/${WBS_PACKAGE_NAME}"
 
   cloud_download "${WBS_PACKAGE_NAME}" "${ROOTFS_DIR}"
-  
-  PA_DEFAULT_CONF="/usr/local/etc/pulse/default.pa"
+
+  PA_DEFAULT_CONF="${ROOTFS_DIR}/usr/local/etc/pulse/default.pa"
   PA_BT_POLICY="load-module module-bluetooth-policy"
   PA_BT_POLICY_OPTS="hfgw=false"
   PA_SUSPEND="load-module module-suspend-on-idle"
