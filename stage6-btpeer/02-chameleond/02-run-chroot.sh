@@ -36,9 +36,8 @@ update-rc.d bluetooth_grpc defaults 100 6
 
 # Enable generated systemd service.
 systemctl enable chameleond.service
-systemctl enable bluetooth_grpc.service
-
 systemctl stop bluetooth_grpc.service
+systemctl disable bluetooth_grpc.service
 
 # Add packages from chameleond/bin to usr/bin
 cp -a "${CHAMELEOND_DIR}"/bin/. /usr/bin/
