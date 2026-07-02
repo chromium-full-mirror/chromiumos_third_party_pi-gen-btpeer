@@ -11,4 +11,7 @@ echo "root:test0000" | chpasswd
 systemctl enable nftables.service
 
 TESTING_RSA_PRI_KEY_PATH="/root/.ssh/testing_rsa"
-chmod 0600 ${TESTING_RSA_PRI_KEY_PATH}
+chmod 0600 "${TESTING_RSA_PRI_KEY_PATH}"
+
+# Enable rsyslog for redirecting logs to specific files
+systemctl enable rsyslog

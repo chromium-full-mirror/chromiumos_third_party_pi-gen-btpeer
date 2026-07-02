@@ -18,6 +18,7 @@ Configures core systems to allow the device to work in a lab environment.
 * Sets default `root` user password for local access and to avoid warnings about it being unset.
 * Disables wifi service, as btpeers do not ever use wifi.
 * Includes utility packages for remote debugging (e.g. `vim`).
+* Includes `rsyslog` to retain system logs for mobly testing.
 
 ### 02-chameleond
 
@@ -35,3 +36,8 @@ rootfs of the image. These files are used by Tauto bluetooth audio tests.
 
 Copies btpeerd source and service config to rootfs, compiles the go code to make
 the binary used as the service in the chroot, and enables the service.
+
+
+### 07-pulseaudio
+
+* Setup pulseaudio log to /var/log/pulse.log with logrotate.
