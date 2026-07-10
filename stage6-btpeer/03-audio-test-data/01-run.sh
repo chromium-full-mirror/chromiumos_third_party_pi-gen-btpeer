@@ -28,6 +28,9 @@ function install_wbs_package() {
   cloud_download "${WBS_PACKAGE_NAME}" "${ROOTFS_DIR}"
 
   PA_DEFAULT_CONF="${ROOTFS_DIR}/usr/local/etc/pulse/default.pa"
+  # system pulseaudio config path can be look up by
+  # `su - pi -c "/usr/bin/pulseaudio --dump-conf | grep default-script-file"`
+  PA_SYSTEM_DEFAULT_CONF="${ROOTFS_DIR}/etc/pulse/default.pa"
   PA_BT_POLICY="load-module module-bluetooth-policy"
   PA_BT_POLICY_OPTS="hfgw=false"
   PA_SUSPEND="load-module module-suspend-on-idle"
@@ -44,6 +47,11 @@ function install_wbs_package() {
         eval "sed -ie 's/${PA_BT_POLICY}.*/& ${PA_BT_POLICY_OPTS}/g' "\
             "${PA_DEFAULT_CONF}"
     fi
+    if ! grep -qie "${PA_BT_POLICY}.*${PA_BT_POLICY_OPTS}"\
+            "${PA_SYSTEM_DEFAULT_CONF}"; then
+        eval "sed -ie 's/${PA_BT_POLICY}.*/& ${PA_BT_POLICY_OPTS}/g' "\
+            "${PA_SYSTEM_DEFAULT_CONF}"
+    fi
 
     # One of the PulseAudio modules, module-suspend-on-idle, will
     # trigger device disconnection if a SCO connection takes too long
@@ -52,6 +60,10 @@ function install_wbs_package() {
     if ! grep -qie "#.*${PA_SUSPEND}" "${PA_DEFAULT_CONF}"; then
         eval "sed -ie 's/${PA_SUSPEND}/#${PA_SUSPEND}/g' "\
             "${PA_DEFAULT_CONF}"
+    fi
+    if ! grep -qie "#.*${PA_SUSPEND}" "${PA_SYSTEM_DEFAULT_CONF}"; then
+        eval "sed -ie 's/${PA_SUSPEND}/#${PA_SUSPEND}/g' "\
+            "${PA_SYSTEM_DEFAULT_CONF}"
     fi
 
     echo "Customized packages in ${WBS_PACKAGE_NAME} installed"
