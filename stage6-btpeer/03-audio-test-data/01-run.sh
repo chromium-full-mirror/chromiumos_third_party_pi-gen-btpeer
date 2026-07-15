@@ -34,6 +34,7 @@ function install_wbs_package() {
   PA_BT_POLICY="load-module module-bluetooth-policy"
   PA_BT_POLICY_OPTS="hfgw=false"
   PA_SUSPEND="load-module module-suspend-on-idle"
+  PA_DAEMON_CONF="${ROOTFS_DIR}/etc/pulse/daemon.conf"
 
   if tar xf "${WBS_TARBALL}" -C "${ROOTFS_DIR}" > /dev/null; then
     # Customize the pulseaudio config here.
@@ -65,6 +66,20 @@ function install_wbs_package() {
         eval "sed -ie 's/${PA_SUSPEND}/#${PA_SUSPEND}/g' "\
             "${PA_SYSTEM_DEFAULT_CONF}"
     fi
+
+    # On upgrading to Bookworm, Raspberry Pi OS adjusted the default
+    # PulseAudio script (default.pa) from `tsched=1` (dynamic timer-based
+    # scheduling) to `tsched=0` (hardware interrupt fallback) to fix Broadcom
+    # ALSA driver glitches. Under `tsched=0`, PulseAudio falls back to using
+    # fixed fragment sizing from daemon.conf. Restore the 15ms buffer fragment
+    # size used in Buster to ensure low audio buffering latency.
+    PA_DAEMON_CONF="${ROOTFS_DIR}/etc/pulse/daemon.conf"
+    if grep -qie "; default-fragment-size-msec = 25" "${PA_DAEMON_CONF}"; then
+        sed -i "s/; default-fragment-size-msec = 25/"\
+            "default-fragment-size-msec = 15/" \
+            "${PA_DAEMON_CONF}"
+    fi
+
 
     echo "Customized packages in ${WBS_PACKAGE_NAME} installed"
   else
