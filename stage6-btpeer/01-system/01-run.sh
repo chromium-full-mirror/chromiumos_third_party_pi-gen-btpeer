@@ -4,6 +4,13 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+# Verify required environment variables are set
+: "${ROOTFS_DIR:?ROOTFS_DIR must be set}"
+: "${PI_GEN_COMMIT:?PI_GEN_COMMIT must be set}"
+: "${BUILD_INFO_FILE_PATH:?BUILD_INFO_FILE_PATH must be set}"
+: "${CHROMIUMOS_DOCKER_DIR:?CHROMIUMOS_DOCKER_DIR must be set}"
+: "${FIRST_USER_NAME:?FIRST_USER_NAME must be set}"
+
 echo "Copying sub-stage 01-system files to rootfs"
 rsync -a rootfs/* "${ROOTFS_DIR}"
 chmod 644 "${ROOTFS_DIR}/boot/firmware/config.txt"
@@ -18,7 +25,7 @@ BUILD_INFO_JSON='{}'
 BUILD_INFO_JSON=$(jq '."image_uuid" = $val' --arg val "${IMAGE_UUID}" <<< "${BUILD_INFO_JSON}")
 BUILD_INFO_JSON=$(jq '."image_build_time" = $val' --arg val "${IMAGE_TIMESTAMP}" <<< "${BUILD_INFO_JSON}")
 BUILD_INFO_JSON=$(jq '."sources"."https://chromium.googlesource.com/chromiumos/third_party/pi-gen-btpeer" = $val' --arg val "${PI_GEN_COMMIT}" <<< "${BUILD_INFO_JSON}")
-mkdir -p $(dirname "${ROOTFS_DIR}/${BUILD_INFO_FILE_PATH}")
+mkdir -p "$(dirname "${ROOTFS_DIR}/${BUILD_INFO_FILE_PATH}")"
 echo "${BUILD_INFO_JSON}" > "${ROOTFS_DIR}/${BUILD_INFO_FILE_PATH}"
 echo -e "Current Build info:\n${BUILD_INFO_JSON}"
 

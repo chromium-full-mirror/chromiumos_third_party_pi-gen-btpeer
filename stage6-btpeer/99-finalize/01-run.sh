@@ -4,6 +4,10 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+# Verify required environment variables are set
+: "${ROOTFS_DIR:?ROOTFS_DIR must be set}"
+: "${BUILD_INFO_FILE_PATH:?BUILD_INFO_FILE_PATH must be set}"
+
 # Copy the final build info file from the rootfs to the docker deploy dir, which
 # will be copied to the deploy dir outside of the docker container when built
 # images are exported.
