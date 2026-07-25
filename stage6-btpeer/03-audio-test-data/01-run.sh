@@ -74,9 +74,31 @@ function install_wbs_package() {
     # fixed fragment sizing from daemon.conf. Restore the 15ms buffer fragment
     # size used in Buster to ensure low audio buffering latency.
     PA_DAEMON_CONF="${ROOTFS_DIR}/etc/pulse/daemon.conf"
-    if grep -qie "; default-fragment-size-msec = 25" "${PA_DAEMON_CONF}"; then
-        sed -i "s/; default-fragment-size-msec = 25/"\
-            "default-fragment-size-msec = 15/" \
+    S_FRAG="; default-fragment-size-msec = 25"
+    R_FRAG="default-fragment-size-msec = 15"
+    if grep -qie "${S_FRAG}" "${PA_DAEMON_CONF}"; then
+        sed -i "s/${S_FRAG}/${R_FRAG}/" \
+            "${PA_DAEMON_CONF}"
+    fi
+
+    S_FMT="; default-sample-format = s16le"
+    R_FMT="default-sample-format = s16le"
+    if grep -qie "${S_FMT}" "${PA_DAEMON_CONF}"; then
+        sed -i "s/${S_FMT}/${R_FMT}/" \
+            "${PA_DAEMON_CONF}"
+    fi
+
+    S_RATE="; default-sample-rate = 44100"
+    R_RATE="default-sample-rate = 44100"
+    if grep -qie "${S_RATE}" "${PA_DAEMON_CONF}"; then
+        sed -i "s/${S_RATE}/${R_RATE}/" \
+            "${PA_DAEMON_CONF}"
+    fi
+
+    S_ALT="; alternate-sample-rate = 48000"
+    R_ALT="alternate-sample-rate = 44100"
+    if grep -qie "${S_ALT}" "${PA_DAEMON_CONF}"; then
+        sed -i "s/${S_ALT}/${R_ALT}/" \
             "${PA_DAEMON_CONF}"
     fi
 

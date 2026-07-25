@@ -11,6 +11,9 @@
 # Copy the final build info file from the rootfs to the docker deploy dir, which
 # will be copied to the deploy dir outside of the docker container when built
 # images are exported.
+# Enforce /etc permissions are 755 to prevent PulseAudio startup failures.
+chmod 755 "${ROOTFS_DIR}/etc"
+
 echo "Copying final build info file to deploy dir"
 DEPLOY_DIR="/pi-gen/deploy"
 cp "${ROOTFS_DIR}/${BUILD_INFO_FILE_PATH}" "${DEPLOY_DIR}"
