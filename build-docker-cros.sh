@@ -28,8 +28,58 @@ else
   touch "${DIR}/stage6-btpeer/SKIP_IMAGES"
 fi
 
+# Parse arguments.
+DEV_MODE=0
+FILTERED_ARGS=""
+for arg in "$@"; do
+  if [ "$arg" = "--dev" ] || [ "$arg" = "-d" ]; then
+    DEV_MODE=1
+  else
+    FILTERED_ARGS="${FILTERED_ARGS} ${arg}"
+  fi
+done
+
+# Set defaults based on DEV_MODE
+if [ "${DEV_MODE}" -eq 1 ]; then
+  echo "Developer mode enabled."
+
+  # Check if base container exists.
+  DOCKER=${DOCKER:-docker}
+  if ! ${DOCKER} ps >/dev/null 2>&1 || ${DOCKER} info 2>/dev/null | grep -q rootless; then
+    DOCKER="sudo ${DOCKER}"
+  fi
+  CONTAINER_NAME=${CONTAINER_NAME:-pigen_work}
+  CONTAINER_EXISTS=$(${DOCKER} ps -a --filter name="${CONTAINER_NAME}" -q)
+
+  # In dev mode, we ALWAYS want to preserve the container.
+  PRESERVE_CONTAINER="${PRESERVE_CONTAINER:-1}"
+
+  if [ -z "${CONTAINER_EXISTS}" ]; then
+    echo "Notice: Base container '${CONTAINER_NAME}' does not exist."
+    echo "        A full build is required to bootstrap the base image."
+    BTPEER_STAGE_ONLY="${BTPEER_STAGE_ONLY:-0}"
+    CONTINUE="${CONTINUE:-0}"
+    PACKAGE_CHAMELEOND="${PACKAGE_CHAMELEOND:-1}"
+  else
+    # Container exists, enable fast incremental build.
+    echo "        Enabling incremental build optimizations."
+    BTPEER_STAGE_ONLY="${BTPEER_STAGE_ONLY:-1}"
+    CONTINUE="${CONTINUE:-1}"
+    PACKAGE_CHAMELEOND="${PACKAGE_CHAMELEOND:-0}"
+  fi
+else
+  # Non-dev mode (default behavior)
+  CONTINUE="${CONTINUE:-0}"
+  PRESERVE_CONTAINER="${PRESERVE_CONTAINER:-0}"
+  BTPEER_STAGE_ONLY="${BTPEER_STAGE_ONLY:-0}"
+  PACKAGE_CHAMELEOND="${PACKAGE_CHAMELEOND:-1}"
+fi
+
+export CONTINUE
+export PRESERVE_CONTAINER
+export PACKAGE_CHAMELEOND
+
 # Allow for easy skipping of prior steps for debugging.
-BTPEER_STAGE_ONLY="${BTPEER_STAGE_ONLY:-0}"
 if [ "${BTPEER_STAGE_ONLY}" -eq 1 ]; then
   touch "${DIR}/stage0/SKIP"
   touch "${DIR}/stage1/SKIP"
@@ -39,12 +89,6 @@ else
   test -f "${DIR}/stage1/SKIP" && rm "${DIR}/stage1/SKIP"
   test -f "${DIR}/stage2/SKIP" && rm "${DIR}/stage2/SKIP"
 fi
-
-# Default docker settings.
-CONTINUE="${CONTINUE:-0}"
-PRESERVE_CONTAINER="${PRESERVE_CONTAINER:-0}"
-export CONTINUE
-export PRESERVE_CONTAINER
 
 # Mount chromiumos root inside docker container so build scripts can use it.
 CHROMIUMOS_DIR="${CHROMIUMOS_DIR:-"${DIR}/../../.."}"
@@ -108,12 +152,11 @@ function package_chameleond {
 }
 
 # Package dependent ChromeOS projects like normal.
-PACKAGE_CHAMELEOND="${PACKAGE_CHAMELEOND:-1}"
 if [ "${PACKAGE_CHAMELEOND}" -eq 1 ]; then
   package_chameleond
 fi
 
 # Run normal raspi docker build script, passing all args.
 echo "Building Raspberry Pi image for btpeer"
-"${BUILD_DOCKER_SCRIPT}" $@
+"${BUILD_DOCKER_SCRIPT}" ${FILTERED_ARGS}
 echo "Successfully built Raspberry Pi image for btpeer"
