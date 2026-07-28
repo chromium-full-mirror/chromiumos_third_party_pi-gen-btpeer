@@ -30,10 +30,18 @@ function prepare_bluetooth_grpc_chameleon {
   PANDORA_DOWNLOAD_URL="https://github.com/google/bt-test-interfaces/archive/${PANDORA_ARCHIVE_NAME}"
 
   #	Download the pandora repo from the archive.
+  CACHE_DIR="${WORK_DIR}/cache"
+  mkdir -p "${CACHE_DIR}"
+  PANDORA_ARCHIVE_PATH="${CACHE_DIR}/${PANDORA_ARCHIVE_NAME}"
 
-  wget -q -P "${PANDORA_TMP_DIR}" "${PANDORA_DOWNLOAD_URL}"
-  tar -xvzf "${PANDORA_TMP_DIR}/${PANDORA_ARCHIVE_NAME}" --strip-components=1 -C "${PANDORA_TMP_DIR}"
-  rm "${PANDORA_TMP_DIR}/${PANDORA_ARCHIVE_NAME}"
+  if [ ! -f "${PANDORA_ARCHIVE_PATH}" ]; then
+    echo "Downloading pandora from ${PANDORA_DOWNLOAD_URL}"
+    wget -q -O "${PANDORA_ARCHIVE_PATH}" "${PANDORA_DOWNLOAD_URL}"
+  else
+    echo "Using cached pandora archive ${PANDORA_ARCHIVE_PATH}"
+  fi
+
+  tar -xvzf "${PANDORA_ARCHIVE_PATH}" --strip-components=1 -C "${PANDORA_TMP_DIR}"
 
   cp -r "${BLUETOOTH_GRPC}"/pandora_experimental/interface/* "${PANDORA_EXPERIMENTAL_TMP_DIR}"
 	cp -r "${BLUETOOTH_GRPC}"/blueship/interface/* "${BLUESHIP_TMP_DIR}"

@@ -21,42 +21,39 @@ WIREPLUMBER_ARCHIVE_SITE="https://gitlab.freedesktop.org/pipewire/wireplumber/-/
 PIPEWIRE_ZIP_ARCHIVE="${PIPEWIRE_ARCHIVE_SITE}/${PIPEWIRE_VERSION}/pipewire-${PIPEWIRE_VERSION}.tar.bz2"
 WIREPLUMBER_ZIP_ARCHIVE="${WIREPLUMBER_ARCHIVE_SITE}/${WIREPLUMBER_VERSION}/wireplumber-${WIREPLUMBER_VERSION}.tar.bz2"
 
-(cd ${THIRD_PARTY_ROOTFS_DIR} &&
-  curl ${PIPEWIRE_ZIP_ARCHIVE} -o "pipewire-${PIPEWIRE_VERSION}.tar.bz2")
+  CACHE_DIR="${WORK_DIR}/cache"
+  mkdir -p "${CACHE_DIR}"
 
-PIPEWIRE_ACTUAL_SHA=$(cd ${THIRD_PARTY_ROOTFS_DIR} &&
- sha512sum "pipewire-${PIPEWIRE_VERSION}.tar.bz2" | awk '{print $1}')
-PIPEWIRE_EXPECTED_SHA=$(cat "files/pipewire-${PIPEWIRE_VERSION}.hash")
-if [ "${PIPEWIRE_ACTUAL_SHA}" != "${PIPEWIRE_EXPECTED_SHA}" ]; then
-  echo "Pipewire SHA is different!! ${PIPEWIRE_ACTUAL_SHA} vs ${PIPEWIRE_EXPECTED_SHA}"
-  exit 1
-fi
+  PIPEWIRE_TARBALL="${CACHE_DIR}/pipewire-${PIPEWIRE_VERSION}.tar.bz2"
+  if [ ! -f "${PIPEWIRE_TARBALL}" ]; then
+    echo "Downloading pipewire..."
+    curl -L "${PIPEWIRE_ZIP_ARCHIVE}" -o "${PIPEWIRE_TARBALL}"
+  fi
 
-(cd ${THIRD_PARTY_ROOTFS_DIR} &&
-  bzip2 -fd "pipewire-${PIPEWIRE_VERSION}.tar.bz2" &&
-  tar -xf "pipewire-${PIPEWIRE_VERSION}.tar" &&
-  mv "pipewire-${PIPEWIRE_VERSION}" "pipewire")
+  PIPEWIRE_ACTUAL_SHA=$(sha512sum "${PIPEWIRE_TARBALL}" | awk '{print $1}')
+  PIPEWIRE_EXPECTED_SHA=$(cat "files/pipewire-${PIPEWIRE_VERSION}.hash")
+  if [ "${PIPEWIRE_ACTUAL_SHA}" != "${PIPEWIRE_EXPECTED_SHA}" ]; then
+    echo "Pipewire SHA is different!! ${PIPEWIRE_ACTUAL_SHA} vs ${PIPEWIRE_EXPECTED_SHA}"
+    exit 1
+  fi
 
-(cd ${PIPEWIRE_SUBPROJECTS_SRC_ROOTFS_DIR} &&
-  curl ${WIREPLUMBER_ZIP_ARCHIVE} -o "wireplumber-${WIREPLUMBER_VERSION}.tar.bz2")
+  tar -xjf "${PIPEWIRE_TARBALL}" -C "${THIRD_PARTY_ROOTFS_DIR}"
+  mv "${THIRD_PARTY_ROOTFS_DIR}/pipewire-${PIPEWIRE_VERSION}" "${PIPEWIRE_SRC_ROOTFS_DIR}"
 
-xxx=$(cd ${PIPEWIRE_SUBPROJECTS_SRC_ROOTFS_DIR} &&
-  ls -lah "wireplumber-${WIREPLUMBER_VERSION}.tar.bz2")
-echo $xxx
+  WIREPLUMBER_TARBALL="${CACHE_DIR}/wireplumber-${WIREPLUMBER_VERSION}.tar.bz2"
+  if [ ! -f "${WIREPLUMBER_TARBALL}" ]; then
+    echo "Downloading wireplumber..."
+    curl -L "${WIREPLUMBER_ZIP_ARCHIVE}" -o "${WIREPLUMBER_TARBALL}"
+  fi
 
-echo $WIREPLUMBER_ZIP_ARCHIVE
+  WIREPLUMBER_ACTUAL_SHA=$(sha512sum "${WIREPLUMBER_TARBALL}" | awk '{print $1}')
+  WIREPLUMBER_EXPECTED_SHA=$(cat "files/wireplumber-${WIREPLUMBER_VERSION}.hash")
+  if [ "${WIREPLUMBER_ACTUAL_SHA}" != "${WIREPLUMBER_EXPECTED_SHA}" ]; then
+    echo "Wireplumber SHA is different!! ${WIREPLUMBER_ACTUAL_SHA} vs ${WIREPLUMBER_EXPECTED_SHA}"
+    exit 1
+  fi
 
-WIREPLUMBER_ACTUAL_SHA=$(cd ${PIPEWIRE_SUBPROJECTS_SRC_ROOTFS_DIR} &&
-sha512sum "wireplumber-${WIREPLUMBER_VERSION}.tar.bz2" | awk '{print $1}')
-WIREPLUMBER_EXPECTED_SHA=$(cat "files/wireplumber-${WIREPLUMBER_VERSION}.hash")
-if [ "${WIREPLUMBER_ACTUAL_SHA}" != "${WIREPLUMBER_EXPECTED_SHA}" ]; then
-  echo "Wireplumber SHA is different!! ${WIREPLUMBER_ACTUAL_SHA} vs ${WIREPLUMBER_EXPECTED_SHA}"
-  exit 1
-fi
-
-(cd ${PIPEWIRE_SUBPROJECTS_SRC_ROOTFS_DIR} &&
-  bzip2 -fd "wireplumber-${WIREPLUMBER_VERSION}.tar.bz2" &&
-  tar -xf "wireplumber-${WIREPLUMBER_VERSION}.tar" &&
-  mv "wireplumber-${WIREPLUMBER_VERSION}" "wireplumber")
+  tar -xjf "${WIREPLUMBER_TARBALL}" -C "${PIPEWIRE_SUBPROJECTS_SRC_ROOTFS_DIR}"
+  mv "${PIPEWIRE_SUBPROJECTS_SRC_ROOTFS_DIR}/wireplumber-${WIREPLUMBER_VERSION}" "${PIPEWIRE_SUBPROJECTS_SRC_ROOTFS_DIR}/wireplumber"
 
 echo "Successfully extracted pipewire source code!"
