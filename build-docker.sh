@@ -17,6 +17,9 @@ if \
   ! ${DOCKER} ps    >/dev/null 2>&1 || \
     ${DOCKER} info 2>/dev/null | grep -q rootless \
 ; then
+  echo "Notice: Docker requires root privileges (fallback to sudo)."
+  echo "        To avoid entering sudo password, add your user to the docker group:"
+  echo "        'sudo usermod -aG docker \$USER' and restart your shell session."
   DOCKER="sudo ${DOCKER}"
 fi
 if ! ${DOCKER} ps >/dev/null; then
