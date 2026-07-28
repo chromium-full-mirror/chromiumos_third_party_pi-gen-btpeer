@@ -70,6 +70,25 @@ if [ ! -f "${CHAMELEOND_BUNDLE_PATH}" ]; then
   exit 1
 fi
 echo "Using chameleond bundle '${CHAMELEOND_BUNDLE_PATH}'"
+
+BTSOCKET_SRC_DOCKER_DIR="${CHROMIUMOS_DOCKER_DIR}/src/platform/btsocket"
+BTSOCKET_COMMIT=$(cd "${BTSOCKET_SRC_DOCKER_DIR}" && git config --global --add safe.directory "${BTSOCKET_SRC_DOCKER_DIR}" && git rev-parse --short HEAD)
+
+# Check if already installed with same commits
+INSTALLED_COMMITS_FILE="${ROOTFS_DIR}/etc/chromiumos/chameleond_installed_commits"
+if [ -f "${INSTALLED_COMMITS_FILE}" ]; then
+  INSTALLED_COMMITS=$(cat "${INSTALLED_COMMITS_FILE}")
+  if [ "${INSTALLED_COMMITS}" = "${CHAMELEON_COMMIT}_${BTSOCKET_COMMIT}" ]; then
+    echo "Chameleond and Btsocket already installed at same commits. Skipping."
+    touch "${ROOTFS_DIR}/tmp/skip_chameleond_install"
+    exit 0
+  fi
+fi
+
+# Set up version info for chroot script
+mkdir -p "${ROOTFS_DIR}/tmp"
+echo "${CHAMELEON_COMMIT}_${BTSOCKET_COMMIT}" > "${ROOTFS_DIR}/tmp/chameleond_commits_to_install"
+
 if [ -d "${CHAMELEON_ROOTFS_DIR}" ]; then
   echo "Removing previously extracted chameleond bundle in rootfs"
   rm -rf "${CHAMELEON_ROOTFS_DIR}"
@@ -89,8 +108,6 @@ rsync --chown=1000:1000 -a "${CHAMELEON_ROOTFS_DIR}/updatable/pipewire/"* -d "${
 echo "Successfully extracted chameleond bundle to rootfs at ${CHAMELEON_ROOTFS_DIR}"
 
 # Copy btsocket source to rootfs (installed into venv via requirements.txt, then source is deleted).
-BTSOCKET_SRC_DOCKER_DIR="${CHROMIUMOS_DOCKER_DIR}/src/platform/btsocket"
-BTSOCKET_COMMIT=$(cd "${BTSOCKET_SRC_DOCKER_DIR}" && git config --global --add safe.directory "${BTSOCKET_SRC_DOCKER_DIR}" && git rev-parse --short HEAD)
 BTSOCKET_ROOTFS_DIR="${ROOTFS_DIR}/etc/chromiumos/src/platform/btsocket"
 echo "Copying ChromeOS btsocket source to rootfs"
 mkdir -p "${BTSOCKET_ROOTFS_DIR}"

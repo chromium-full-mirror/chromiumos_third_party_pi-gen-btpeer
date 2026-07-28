@@ -4,6 +4,12 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+if [ -f /tmp/skip_chameleond_install ]; then
+  echo "Chameleond and Btsocket already installed. Skipping compilation/installation."
+  rm /tmp/skip_chameleond_install
+  exit 0
+fi
+
 CHAMELEOND_DIR="/etc/chromiumos/src/platform/chameleon"
 CHAMELEOND_VENV="${CHAMELEOND_DIR}/venv"
 BTSOCKET_DIR="/etc/chromiumos/src/platform/btsocket"
@@ -65,3 +71,9 @@ python3 -m pip install --upgrade "${BLUETOOTH_GRPC_ROOT_DIR}"
 cd "${CHAMELEOND_DIR}"
 # add --cyclone5 to ignore installation of cryptography(2.6.1 is too old for Python3.11), will be removed after setup.py changed
 python3 setup.py install -f --grpc --cyclone5 --install-scripts="${CHAMELEOND_DIR}"
+
+# Save version info
+if [ -f /tmp/chameleond_commits_to_install ]; then
+  mkdir -p /etc/chromiumos
+  mv /tmp/chameleond_commits_to_install /etc/chromiumos/chameleond_installed_commits
+fi
