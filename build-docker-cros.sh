@@ -146,7 +146,7 @@ function package_chameleond {
   (cd "${CHROMIUMOS_DIR}" && \
   cros_sdk \
   --working-dir '/mnt/host/source/src/platform/chameleon' \
-  make
+  make -j$(nproc)
   CHAMELEON_COMMIT=$(cat "${CHROMIUMOS_DIR}/src/platform/chameleon/dist/commit"))
   echo "Successfully packaged chameleond in ChromeOS chroot at chameleon commit ${CHAMELEON_COMMIT}"
 }
