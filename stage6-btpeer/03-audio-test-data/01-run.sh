@@ -32,7 +32,7 @@ function install_wbs_package() {
   # `su - pi -c "/usr/bin/pulseaudio --dump-conf | grep default-script-file"`
   PA_SYSTEM_DEFAULT_CONF="${ROOTFS_DIR}/etc/pulse/default.pa"
   PA_BT_POLICY="load-module module-bluetooth-policy"
-  PA_BT_POLICY_OPTS="hfgw=false"
+  PA_BT_POLICY_OPTS="hfgw=false a2dp_source=false"
   PA_SUSPEND="load-module module-suspend-on-idle"
   PA_DAEMON_CONF="${ROOTFS_DIR}/etc/pulse/daemon.conf"
 
