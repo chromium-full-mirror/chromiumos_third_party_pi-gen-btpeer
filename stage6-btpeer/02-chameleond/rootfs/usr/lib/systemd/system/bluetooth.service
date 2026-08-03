@@ -6,7 +6,7 @@ ConditionPathIsDirectory=/sys/class/bluetooth
 [Service]
 Type=dbus
 BusName=org.bluez
-ExecStart=/usr/libexec/bluetooth/bluetoothd -d -P input,avrcp,a2dp --noplugin=sap
+ExecStart=/usr/libexec/bluetooth/bluetoothd -d -P input,avrcp,a2dp,sap
 NotifyAccess=main
 CapabilityBoundingSet=CAP_NET_ADMIN CAP_NET_BIND_SERVICE
 LimitNPROC=1

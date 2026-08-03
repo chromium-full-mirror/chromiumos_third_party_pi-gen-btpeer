@@ -32,7 +32,7 @@ function install_wbs_package() {
   # `su - pi -c "/usr/bin/pulseaudio --dump-conf | grep default-script-file"`
   PA_SYSTEM_DEFAULT_CONF="${ROOTFS_DIR}/etc/pulse/default.pa"
   PA_BT_POLICY="load-module module-bluetooth-policy"
-  PA_BT_POLICY_OPTS="hfgw=false a2dp_source=false"
+  PA_BT_POLICY_OPTS="ag=false a2dp_source=false"
   PA_SUSPEND="load-module module-suspend-on-idle"
   PA_DAEMON_CONF="${ROOTFS_DIR}/etc/pulse/daemon.conf"
 
@@ -43,16 +43,31 @@ function install_wbs_package() {
     # automatically load the module-loopback upon detected HSP/HFP
     # activities. Update the PulseAudio default setting not to load the
     # loopback module while switching to HFP.
-    if ! grep -qie "${PA_BT_POLICY}.*${PA_BT_POLICY_OPTS}"\
-            "${PA_DEFAULT_CONF}"; then
-        eval "sed -ie 's/${PA_BT_POLICY}.*/& ${PA_BT_POLICY_OPTS}/g' "\
-            "${PA_DEFAULT_CONF}"
-    fi
-    if ! grep -qie "${PA_BT_POLICY}.*${PA_BT_POLICY_OPTS}"\
-            "${PA_SYSTEM_DEFAULT_CONF}"; then
-        eval "sed -ie 's/${PA_BT_POLICY}.*/& ${PA_BT_POLICY_OPTS}/g' "\
-            "${PA_SYSTEM_DEFAULT_CONF}"
-    fi
+    for conf in "${PA_DEFAULT_CONF}" "${PA_SYSTEM_DEFAULT_CONF}"; do
+        if [ -f "${conf}" ]; then
+            local pat="^[[:space:]]*${PA_BT_POLICY}"
+            pat+="[[:space:]]\+${PA_BT_POLICY_OPTS}[[:space:]]*$"
+            if ! grep -q "${pat}" "${conf}"; then
+                local src="^[[:space:]]*${PA_BT_POLICY}.*\$"
+                local dst="${PA_BT_POLICY} ${PA_BT_POLICY_OPTS}"
+                sed -i "s#${src}#${dst}#" "${conf}"
+            fi
+        fi
+    done
+
+    # Force PulseAudio to use ofono backend for HFP.
+    local discover_mod="load-module module-bluetooth-discover"
+    for conf in "${PA_DEFAULT_CONF}" "${PA_SYSTEM_DEFAULT_CONF}"; do
+        if [ -f "${conf}" ]; then
+            local cond1="^[[:space:]]*${discover_mod}"
+            local cond2="${cond1}.*headset=ofono"
+            if grep -q "${cond1}" "${conf}" && \
+               ! grep -q "${cond2}" "${conf}"; then
+                local match="^[[:space:]]*${discover_mod}.*"
+                sed -i "s#${match}#& headset=ofono#" "${conf}"
+            fi
+        fi
+    done
 
     # One of the PulseAudio modules, module-suspend-on-idle, will
     # trigger device disconnection if a SCO connection takes too long
