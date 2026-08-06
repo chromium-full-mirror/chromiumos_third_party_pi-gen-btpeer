@@ -9,7 +9,7 @@
 
 # Last known working phonesim version.
 PHONESIM_VERSION="2.1"
-PHONESIM_ZIP_ARCHIVE="https://git.kernel.org/pub/scm/network/ofono/phonesim.git/snapshot/phonesim-${PHONESIM_VERSION}.tar.gz"
+PHONESIM_ZIP_ARCHIVE="https://www.kernel.org/pub/linux/network/ofono/phonesim-${PHONESIM_VERSION}.tar.gz"
 
 # Check if already installed
 INSTALLED_VERSION_FILE="${ROOTFS_DIR}/etc/chromiumos/phonesim_version"

@@ -14,7 +14,6 @@ fi
 # Build Phonesim from source
 PHONESIM_SRC_ROOTFS_DIR="/etc/chromiumos/src/third_party/phonesim"
 (cd "${PHONESIM_SRC_ROOTFS_DIR}" &&
-    ./bootstrap &&
     ./configure --prefix=/usr &&
     make -j$(nproc) &&
     make install)
