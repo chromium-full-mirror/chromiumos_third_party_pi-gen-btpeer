@@ -46,6 +46,6 @@ BUILD_INFO_JSON=$(jq '."sources"."https://chromium.googlesource.com/chromiumos/c
 echo "${BUILD_INFO_JSON}" > "${ROOTFS_DIR}/${BUILD_INFO_FILE_PATH}"
 echo -e "Current Build info:\n${BUILD_INFO_JSON}"
 
-echo "Copying sub-stage 04-btpeerd files to rootfs"
+echo "Copying sub-stage 05-btpeerd files to rootfs"
 rsync -a rootfs/* "${ROOTFS_DIR}"
-echo "Successfully copied sub-stage 04-btpeerd files to rootfs"
+echo "Successfully copied sub-stage 05-btpeerd files to rootfs"

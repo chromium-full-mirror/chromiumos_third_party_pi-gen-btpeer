@@ -123,6 +123,6 @@ echo -e "Current Build info:\n${BUILD_INFO_JSON}"
 
 prepare_bluetooth_grpc_chameleon
 
-echo "Copying sub-stage 02-chameleond files to rootfs"
+echo "Copying sub-stage 03-chameleond files to rootfs"
 rsync -a rootfs/* "${ROOTFS_DIR}"
-echo "Successfully copied sub-stage 02-chameleond files to rootfs"
+echo "Successfully copied sub-stage 03-chameleond files to rootfs"
