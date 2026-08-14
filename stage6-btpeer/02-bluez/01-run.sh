@@ -20,7 +20,17 @@ BLUEZ_SRC_FILES=(
   "bluez_${BLUEZ_UPSTREAM_VERSION}.orig.tar.xz"
 )
 
-FULL_BLUEZ_VERSION="${BLUEZ_LOCAL_VERSION}"
+# Compute patch hash to invalidate build cache when patches change
+PATCH_HASH=""
+if [ -d "patches" ] && [ -n "$(find patches/ -maxdepth 1 -name '*.patch' -print -quit 2>/dev/null)" ]; then
+  PATCH_HASH=$(find patches/ -maxdepth 1 -name '*.patch' -type f -exec sha256sum {} + | sort | sha256sum | awk '{print substr($1, 1, 12)}')
+fi
+
+if [ -n "${PATCH_HASH}" ]; then
+  FULL_BLUEZ_VERSION="${BLUEZ_LOCAL_VERSION}_${PATCH_HASH}"
+else
+  FULL_BLUEZ_VERSION="${BLUEZ_LOCAL_VERSION}"
+fi
 
 # Check if already installed
 INSTALLED_VERSION_FILE="${ROOTFS_DIR}/etc/chromiumos/bluez_version"

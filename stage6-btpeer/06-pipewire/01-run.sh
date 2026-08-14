@@ -12,12 +12,19 @@ THIRD_PARTY_ROOTFS_DIR="${ROOTFS_DIR}/etc/chromiumos/src/third_party"
 PIPEWIRE_SRC_ROOTFS_DIR="${THIRD_PARTY_ROOTFS_DIR}/pipewire"
 PIPEWIRE_SUBPROJECTS_SRC_ROOTFS_DIR="${PIPEWIRE_SRC_ROOTFS_DIR}/subprojects"
 
-# Check if already installed
+# Check if already installed with same PipeWire, WirePlumber, and BlueZ version
+BLUEZ_VERSION_FILE="${ROOTFS_DIR}/etc/chromiumos/bluez_version"
+BLUEZ_VERSION_TAG=""
+if [ -f "${BLUEZ_VERSION_FILE}" ]; then
+  BLUEZ_VERSION_TAG="_$(cat "${BLUEZ_VERSION_FILE}")"
+fi
+FULL_PIPEWIRE_VERSION="${PIPEWIRE_VERSION}_${WIREPLUMBER_VERSION}${BLUEZ_VERSION_TAG}"
+
 INSTALLED_VERSION_FILE="${ROOTFS_DIR}/etc/chromiumos/pipewire_version"
 if [ -f "${INSTALLED_VERSION_FILE}" ]; then
   INSTALLED_VERSION=$(cat "${INSTALLED_VERSION_FILE}")
-  if [ "${INSTALLED_VERSION}" = "${PIPEWIRE_VERSION}_${WIREPLUMBER_VERSION}" ]; then
-    echo "Pipewire and Wireplumber ${INSTALLED_VERSION} already installed. Skipping download."
+  if [ "${INSTALLED_VERSION}" = "${FULL_PIPEWIRE_VERSION}" ]; then
+    echo "Pipewire and Wireplumber ${INSTALLED_VERSION} already installed. Skipping download and compilation."
     touch "${ROOTFS_DIR}/tmp/skip_pipewire_build"
     exit 0
   fi
@@ -25,7 +32,8 @@ fi
 
 # If we are here, we need to install. Set up version info for chroot script.
 mkdir -p "${ROOTFS_DIR}/tmp"
-echo "${PIPEWIRE_VERSION}_${WIREPLUMBER_VERSION}" > "${ROOTFS_DIR}/tmp/pipewire_version_to_install"
+rm -f "${ROOTFS_DIR}/tmp/skip_pipewire_build"
+echo "${FULL_PIPEWIRE_VERSION}" > "${ROOTFS_DIR}/tmp/pipewire_version_to_install"
 
 mkdir -p ${THIRD_PARTY_ROOTFS_DIR}
 if [ -d "${PIPEWIRE_SRC_ROOTFS_DIR}" ]; then
