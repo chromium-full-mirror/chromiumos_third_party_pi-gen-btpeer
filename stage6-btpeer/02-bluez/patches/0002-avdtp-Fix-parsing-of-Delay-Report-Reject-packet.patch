@@ -1,0 +1,26 @@
+From: Alexandr Astrouski <astrouski@google.com>
+Date: Thu, 13 Aug 2026 11:00:00 +0000
+Subject: [PATCH 2/2] avdtp: Fix parsing of Delay Report Reject packet
+
+In AVDTP 1.3, the Delay Report Reject packet contains only a 1-byte error code.
+BlueZ incorrectly used stream_rej_to_err (expecting 2 bytes), which caused a
+fatal parsing error and disconnected the L2CAP link when receiving a reject.
+Use seid_rej_to_err to correctly parse the 1-byte error code.
+
+BUG=b:544997491
+---
+ profiles/audio/avdtp.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/profiles/audio/avdtp.c
++++ b/profiles/audio/avdtp.c
+@@ -3137,7 +3137,7 @@ static gboolean avdtp_parse_rej(struct avdtp *session,
+ 					sep->user_data);
+ 		return FALSE;
+ 	case AVDTP_DELAY_REPORT:
+-		if (!stream_rej_to_err(buf, size, &err, &acp_seid))
++		if (!seid_rej_to_err(buf, size, &err))
+ 			return FALSE;
+ 		error("DELAY_REPORT request rejected: %s (%d)",
+ 				avdtp_strerror(&err), err.err.error_code);
+-- 
