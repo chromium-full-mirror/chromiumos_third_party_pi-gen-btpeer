@@ -27,3 +27,12 @@ if ! grep -q 'policy user="pi"' "${OFONO_CONF}"; then
 
     cp "${TMP_CONF}" "${OFONO_CONF}"
 fi
+
+# Disable ofono at system boot so it does not race bluetoothd initialization,
+# and ensure it is ordered after bluetooth.service when started on-demand.
+systemctl disable ofono.service || true
+mkdir -p /etc/systemd/system/ofono.service.d
+cat << 'EOF' > /etc/systemd/system/ofono.service.d/override.conf
+[Unit]
+After=bluetooth.service
+EOF
