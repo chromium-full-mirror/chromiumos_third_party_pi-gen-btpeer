@@ -1,0 +1,130 @@
+From: Alexandr Astrouski <astrouski@google.com>
+Date: Fri, 25 Sep 2026 11:50:00 +0000
+Subject: [PATCH] shared/gatt-server: Fix UAF of chan on pending read timeout
+
+A read (or write) of an attribute provided by an external D-Bus GATT
+application is completed asynchronously. If the ATT bearer is
+disconnected while such a request is pending, gatt-database drops the
+D-Bus reply ("Pending read was canceled when object got removed"), and
+the request is only completed when the gatt-db ATTRIBUTE_TIMEOUT (5 s)
+fires. read_complete_cb() then calls bt_att_chan_send_error_rsp() on
+op->chan, which was freed when the channel disconnected:
+
+  gatt-server.c:handle_read_req() Read Req - handle: 0x0022
+  gatt-database.c:read_reply_cb() Pending read was canceled when object
+    got removed
+  gatt-server.c:read_complete_cb() Read Complete: err -110
+  bluetooth.service: Main process exited, code=killed, status=11/SEGV
+
+Register a disconnect callback for every async read/write op which
+clears op->chan, and unregister it when the op is destroyed.
+bt_att_chan_send*() already ignore a NULL channel, so the late
+completion becomes a no-op.
+
+Note: bt_att only reports the disconnection of the last channel, so an
+EATT channel going away on its own while the bearer stays up is not
+covered by this change.
+
+Seen on Raspberry Pi OS 12 (BlueZ 5.66) ChromeOS btpeers emulating an
+LE HID mouse (chameleond) while the DUT disconnects during a Battery
+Level read.
+---
+ src/shared/gatt-server.c | 38 ++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 38 insertions(+)
+
+diff --git a/src/shared/gatt-server.c b/src/shared/gatt-server.c
+index 85cff30ec..1b1c048d9 100644
+--- a/src/shared/gatt-server.c
++++ b/src/shared/gatt-server.c
+@@ -47,6 +47,7 @@
+ struct async_read_op {
+ 	struct bt_att_chan *chan;
+ 	struct bt_gatt_server *server;
++	unsigned int disconn_id;
+ 	uint8_t opcode;
+ 	bool done;
+ 	uint8_t *pdu;
+@@ -58,9 +59,31 @@ struct async_read_op {
+ struct async_write_op {
+ 	struct bt_att_chan *chan;
+ 	struct bt_gatt_server *server;
++	unsigned int disconn_id;
+ 	uint8_t opcode;
+ };
+ 
++/*
++ * Pending reads/writes of external (D-Bus) attributes may complete, or time
++ * out in gatt-db, after the ATT bearer has been disconnected and its channels
++ * freed. Drop the channel reference on disconnect so that the completion
++ * callbacks don't respond on a freed bt_att_chan; bt_att_chan_send*() ignore
++ * a NULL channel.
++ */
++static void async_read_op_disconn_cb(int err, void *user_data)
++{
++	struct async_read_op *op = user_data;
++
++	op->chan = NULL;
++}
++
++static void async_write_op_disconn_cb(int err, void *user_data)
++{
++	struct async_write_op *op = user_data;
++
++	op->chan = NULL;
++}
++
+ struct prep_write_data {
+ 	struct bt_gatt_server *server;
+ 	uint8_t *value;
+@@ -343,6 +366,9 @@ error:
+ 
+ static void async_read_op_destroy(struct async_read_op *op)
+ {
++	if (op->disconn_id)
++		bt_att_unregister_disconnect(op->server->att, op->disconn_id);
++
+ 	bt_gatt_server_unref(op->server);
+ 	queue_destroy(op->db_data, NULL);
+ 	free(op->pdu);
+@@ -543,6 +569,9 @@ static void read_by_type_cb(struct bt_att_chan *chan, uint8_t opcode,
+ 	op->chan = chan;
+ 	op->opcode = opcode;
+ 	op->server = bt_gatt_server_ref(server);
++	op->disconn_id = bt_att_register_disconnect(server->att,
++						async_read_op_disconn_cb,
++						op, NULL);
+ 	op->db_data = q;
+ 
+ 	process_read_by_type(op);
+@@ -765,6 +794,9 @@ error:
+ 
+ static void async_write_op_destroy(struct async_write_op *op)
+ {
++	if (op->disconn_id)
++		bt_att_unregister_disconnect(op->server->att, op->disconn_id);
++
+ 	bt_gatt_server_unref(op->server);
+ 	free(op);
+ }
+@@ -856,6 +888,9 @@ static void write_cb(struct bt_att_chan *chan, uint8_t opcode, const void *pdu,
+ 	op = new0(struct async_write_op, 1);
+ 	op->chan = chan;
+ 	op->server = bt_gatt_server_ref(server);
++	op->disconn_id = bt_att_register_disconnect(server->att,
++						async_write_op_disconn_cb,
++						op, NULL);
+ 	op->opcode = opcode;
+ 
+ 	if (gatt_db_attribute_write(attr, 0, pdu + 2, length - 2, opcode,
+@@ -954,6 +989,9 @@ static void handle_read_req(struct bt_att_chan *chan,
+ 	op->chan = chan;
+ 	op->opcode = opcode;
+ 	op->server = bt_gatt_server_ref(server);
++	op->disconn_id = bt_att_register_disconnect(server->att,
++						async_read_op_disconn_cb,
++						op, NULL);
+ 
+ 	if (gatt_db_attribute_read(attr, offset, opcode, server->att,
+ 							read_complete_cb, op))
+-- 
+2.43.0
