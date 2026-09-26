@@ -31,7 +31,9 @@ patches to be applied on top of the Debian/RPi downstream patches.
   series (applied with fuzz 0).
 * Builds the packages with `dpkg-buildpackage`, installs `bluez`, `bluetooth`,
   `libbluetooth3` and `libbluetooth-dev` as `<version>+cros1`, and holds them.
-* Installs the btpeer `bluetooth.service` and enables it.
+* Installs the btpeer `bluetooth.service`, sets `Channels = 1` in
+  `/etc/bluetooth/main.conf` to disable EATT by default, and enables the
+  service.
 
 ### 03-chameleond
 
