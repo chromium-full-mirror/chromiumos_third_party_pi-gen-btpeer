@@ -1,4 +1,7 @@
 #!/bin/bash -e
+# Copyright 2026 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
 
 IMG_FILE="${STAGE_WORK_DIR}/${IMG_FILENAME}${IMG_SUFFIX}.img"
 INFO_FILE="${STAGE_WORK_DIR}/${IMG_FILENAME}${IMG_SUFFIX}.info"
@@ -45,6 +48,9 @@ rm -f "${ROOTFS_DIR}"/var/lib/dpkg/*-old
 rm -f "${ROOTFS_DIR}"/usr/share/icons/*/icon-theme.cache
 
 rm -f "${ROOTFS_DIR}/var/lib/dbus/machine-id"
+# Remove pre-baked timesync state directory so systemd-timesyncd.service
+# (StateDirectory=systemd/timesync) allocates a fresh runtime inode on boot.
+rm -rf "${ROOTFS_DIR}/var/lib/systemd/timesync"
 
 true > "${ROOTFS_DIR}/etc/machine-id"
 
@@ -86,6 +92,14 @@ cp "$ROOTFS_DIR/etc/rpi-issue" "$INFO_FILE"
 ROOT_DEV="$(mount | grep "${ROOTFS_DIR} " | cut -f1 -d' ')"
 
 unmount "${ROOTFS_DIR}"
+# Rebuild ext4 directory blocks and metadata_csum leaf tails (b/575983281).
+# e2fsck exits with bit 1 set when it optimizes/fixes directory blocks.
+e2fsck_rc=0
+e2fsck -fyD "${ROOT_DEV}" || e2fsck_rc=$?
+if [ "${e2fsck_rc}" -gt 2 ]; then
+	echo "Error: e2fsck -fyD failed on ${ROOT_DEV} (rc=${e2fsck_rc})" >&2
+	exit "${e2fsck_rc}"
+fi
 zerofree "${ROOT_DEV}"
 
 unmount_image "${IMG_FILE}"
