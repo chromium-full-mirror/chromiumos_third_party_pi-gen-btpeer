@@ -1,0 +1,121 @@
+#!/bin/bash -e
+
+# Copyright 2026 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+# Updates the system hostname, /etc/hostname, and the 127.0.1.1 entry in
+# /etc/hosts atomically and idempotently so local hostname resolution (e.g.
+# sudo) never blocks on DNS and lab peers do not collide on "localhost"/"linux".
+
+HOSTNAME_FILE="${BTPEER_HOSTNAME_FILE:-/etc/hostname}"
+HOSTS_FILE="${BTPEER_HOSTS_FILE:-/etc/hosts}"
+ETH0_ADDR_FILE="${BTPEER_ETH0_ADDR_FILE:-/sys/class/net/eth0/address}"
+SERIAL_FILE="${BTPEER_SERIAL_FILE:-/sys/firmware/devicetree/base/serial-number}"
+
+derive_fallback_hostname() {
+  local mac=""
+  local serial=""
+  if [ -r "${ETH0_ADDR_FILE}" ]; then
+    mac=$(tr -d ':\n[:space:]' < "${ETH0_ADDR_FILE}" |
+      tr '[:upper:]' '[:lower:]')
+  fi
+  if [[ "${mac}" =~ ^[0-9a-f]{12}$ ]]; then
+    printf 'btpeer-%s\n' "${mac}"
+    return
+  fi
+  if [ -r "${SERIAL_FILE}" ]; then
+    serial=$(tr -d '\0\n[:space:]' < "${SERIAL_FILE}" |
+      tr '[:upper:]' '[:lower:]')
+  fi
+  if [[ "${serial}" =~ ^[0-9a-f]{8,}$ ]]; then
+    printf 'btpeer-%s\n' "${serial: -8}"
+    return
+  fi
+  printf 'btpeer\n'
+}
+
+is_valid_hostname() {
+  local candidate="$1"
+  if [ -z "${candidate}" ] || [ "${#candidate}" -gt 253 ]; then
+    return 1
+  fi
+  [[ "${candidate}" =~ ^[a-zA-Z0-9]([a-zA-Z0-9.-]*[a-zA-Z0-9])?$ ]]
+}
+
+raw_arg="${1:-}"
+current_static=""
+if [ -r "${HOSTNAME_FILE}" ]; then
+  current_static=$(tr -d '\r\n[:space:]' < "${HOSTNAME_FILE}")
+fi
+
+target_fqdn=""
+if [ "${raw_arg}" = "--boot" ] || [ -z "${raw_arg}" ]; then
+  case "${current_static}" in
+    "" | localhost | localhost.* | linux | btpeer | btpeer-[0-9a-f]*)
+      target_fqdn="$(derive_fallback_hostname)"
+      ;;
+    *)
+      if is_valid_hostname "${current_static}"; then
+        target_fqdn="${current_static}"
+      else
+        target_fqdn="$(derive_fallback_hostname)"
+      fi
+      ;;
+  esac
+else
+  case "${raw_arg}" in
+    localhost | localhost.* | linux)
+      exit 0
+      ;;
+  esac
+  if ! is_valid_hostname "${raw_arg}"; then
+    exit 0
+  fi
+  target_fqdn="${raw_arg}"
+fi
+
+short_host="${target_fqdn%%.*}"
+short_host="${short_host:0:63}"
+if [ -z "${short_host}" ]; then
+  exit 0
+fi
+
+if [ "${target_fqdn}" != "${short_host}" ]; then
+  hosts_line="$(printf '127.0.1.1\t%s %s' "${target_fqdn}" "${short_host}")"
+else
+  hosts_line="$(printf '127.0.1.1\t%s' "${short_host}")"
+fi
+
+if [ "${BTPEER_SKIP_KERNEL_HOSTNAME:-0}" != "1" ]; then
+  current_kernel="$(hostname 2>/dev/null || true)"
+  if [ "${current_kernel}" != "${short_host}" ]; then
+    hostname "${short_host}"
+  fi
+fi
+
+if [ "${current_static}" != "${short_host}" ]; then
+  tmp_hostname="$(mktemp "${HOSTNAME_FILE}.XXXXXX")"
+  printf '%s\n' "${short_host}" > "${tmp_hostname}"
+  chmod 0644 "${tmp_hostname}"
+  mv -f "${tmp_hostname}" "${HOSTNAME_FILE}"
+fi
+
+current_hosts_127=""
+if [ -r "${HOSTS_FILE}" ]; then
+  current_hosts_127="$(grep -E '^[[:space:]]*127\.0\.1\.1[[:space:]]+' \
+    "${HOSTS_FILE}" || true)"
+fi
+
+if [ "${current_hosts_127}" != "${hosts_line}" ]; then
+  tmp_hosts="$(mktemp "${HOSTS_FILE}.XXXXXX")"
+  if [ -r "${HOSTS_FILE}" ]; then
+    grep -Ev '^[[:space:]]*127\.0\.1\.1[[:space:]]+' "${HOSTS_FILE}" \
+      > "${tmp_hosts}" || true
+  else
+    printf '127.0.0.1\tlocalhost\n' > "${tmp_hosts}"
+  fi
+  printf '%s\n' "${hosts_line}" >> "${tmp_hosts}"
+  chmod 0644 "${tmp_hosts}"
+  mv -f "${tmp_hosts}" "${HOSTS_FILE}"
+fi

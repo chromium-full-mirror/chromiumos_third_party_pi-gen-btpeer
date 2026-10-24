@@ -1,0 +1,14 @@
+# Copyright 2026 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+# Synchronize system hostname and /etc/hosts with DHCP lease host-name.
+# Sourced by /sbin/dhclient-script (/bin/sh); do not call exit or set -e.
+case "${reason:-}" in
+  BOUND|RENEW|REBIND|REBOOT)
+    if [ -n "${new_host_name:-}" ] && \
+       [ -x /usr/local/sbin/btpeer-update-hostname ]; then
+      /usr/local/sbin/btpeer-update-hostname "${new_host_name}" || true
+    fi
+    ;;
+esac

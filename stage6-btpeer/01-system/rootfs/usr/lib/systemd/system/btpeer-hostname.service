@@ -1,0 +1,19 @@
+# Copyright 2026 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+[Unit]
+Description=Initialize unique btpeer hostname before networking
+DefaultDependencies=no
+After=local-fs.target
+Before=network-pre.target networking.service rsyslog.service shutdown.target
+Wants=network-pre.target
+Conflicts=shutdown.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/btpeer-update-hostname --boot
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

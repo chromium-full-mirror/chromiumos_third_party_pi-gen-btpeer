@@ -15,3 +15,15 @@ chmod 0600 "${TESTING_RSA_PRI_KEY_PATH}"
 
 # Enable rsyslog for redirecting logs to specific files
 systemctl enable rsyslog
+
+# Ensure unique non-localhost hostname before networking and sync DHCP hostname.
+chmod 0755 /usr/local/sbin/btpeer-update-hostname
+systemctl enable btpeer-hostname.service
+
+# Use ifupdown (networking.service) as the sole DHCP manager on eth0.
+systemctl disable NetworkManager.service || true
+systemctl disable NetworkManager-wait-online.service || true
+
+# Disable and mask avahi-daemon to prevent mDNS conflict storms on lab VLANs.
+systemctl disable avahi-daemon.service avahi-daemon.socket || true
+systemctl mask avahi-daemon.service avahi-daemon.socket
