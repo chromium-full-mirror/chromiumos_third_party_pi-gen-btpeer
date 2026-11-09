@@ -1,0 +1,102 @@
+From d4e04aee2aff1843ebb5c5a0d86c172c34824be9 Mon Sep 17 00:00:00 2001
+From: Alexandr Astrouski <astrouski@google.com>
+Date: Mon, 9 Nov 2026 10:20:31 +0000
+Subject: [PATCH] advertising: Include local name in ADV_IND when it fits
+
+In BlueZ 5.66, generate_adv_data() only includes client->name in the
+primary advertising data (ADV_IND) when a secondary PHY is configured,
+deferring LocalName (0x09) exclusively to SCAN_RSP (0x1b) for legacy
+advertisements.
+
+When emulating LE peripherals via LEAdvertisingManager1 on RPi OS 12
+btpeers, omitting LocalName from ADV_IND breaks two test categories:
+1. BluetoothScanFilterTest: Passive MSFT hardware advertisement monitors
+   with ad_type=0x09 (LocalName) filter on ADV_IND and never send
+   SCAN_REQ.
+2. BluetoothDiscoveryTest.test_discover_devices(DOUBLE_LE) (b/158217517):
+   Connecting to the first peer or RF collisions during active scanning
+   can interrupt the SCAN_REQ/SCAN_RSP exchange for the second peer.
+
+This intentionally changes behavior for every legacy D-Bus advertiser on
+the peer (only chameleond today) by including client->name in
+client->data inside generate_adv_data() when the resulting payload fits
+within calc_max_adv_len() (and clearing stale appearance/name on
+property removal). Oversized payloads (e.g. Fast Pair with long FE2C
+service data plus name/HID, or long custom names) log a warning and keep
+LocalName in SCAN_RSP only.
+---
+ src/advertising.c | 49 +++++++++++++++++++++++++++++++++++++----------
+ 1 file changed, 39 insertions(+), 10 deletions(-)
+
+diff --git a/src/advertising.c b/src/advertising.c
+index 18e8f75..6e9f51e 100644
+--- a/src/advertising.c
++++ b/src/advertising.c
+@@ -774,18 +774,46 @@ static uint8_t *generate_adv_data(struct btd_adv_client *client,
+ 			appearance = 0x000;
+ 
+ 		bt_ad_add_appearance(client->data, appearance);
+-	}
+-
+-	/* Scan response shall not be used when connectable and setting a
+-	 * secondary PHY since that would end up using EA types instead of
+-	 * legacy which doesn't support being connectable and scannable
+-	 * simultaneously.
++	} else {
++		bt_ad_clear_appearance(client->data);
++	}
++
++	/* Upstream BlueZ only includes client->name in ADV_IND when a secondary
++	 * PHY (Extended Advertising) is configured, deferring LocalName (0x09)
++	 * exclusively to SCAN_RSP (0x1b) for legacy 1M advertisements to save
++	 * space in the 31-byte ADV_IND payload.
++	 *
++	 * On ChromeOS btpeers emulating LE peripherals, LocalName is required
++	 * in ADV_IND (in addition to SCAN_RSP) when it fits because:
++	 * 1. Passive MSFT hardware advertisement monitors (BluetoothScanFilterTest)
++	 *    filter on ad_type=0x09 (LocalName) in ADV_IND and never transmit
++	 *    SCAN_REQ.
++	 * 2. Simultaneous multi-peer discovery (BluetoothDiscoveryTest DOUBLE_LE)
++	 *    can miss SCAN_RSP due to RF collisions or connection establishment
++	 *    interrupting the active SCAN_REQ/SCAN_RSP exchange.
++	 *
++	 * If adding LocalName causes the payload to exceed calc_max_adv_len()
++	 * (e.g. Fast Pair with long FE2C service data plus name/HID, or long
++	 * custom names), fall back to keeping LocalName in SCAN_RSP only.
+ 	 */
+-	if ((*flags & MGMT_ADV_FLAG_CONNECTABLE) &&
+-				(*flags & MGMT_ADV_FLAG_SEC_MASK) &&
+-				client->name) {
+-		*flags &= ~MGMT_ADV_FLAG_LOCAL_NAME;
++	if (client->name) {
++		size_t max = calc_max_adv_len(client, *flags);
++		size_t tmp_len = 0;
++		uint8_t *tmp;
++
+ 		bt_ad_add_name(client->data, client->name);
++		tmp = bt_ad_generate(client->data, &tmp_len);
++		free(tmp);
++		if (!tmp || tmp_len > max) {
++			warn("LocalName does not fit in ADV_IND (%zu > %zu), "
++					"keeping it in SCAN_RSP only",
++					tmp_len, max);
++			bt_ad_clear_name(client->data);
++		} else {
++			*flags &= ~MGMT_ADV_FLAG_LOCAL_NAME;
++		}
++	} else {
++		bt_ad_clear_name(client->data);
+ 	}
+ 
+ 	return bt_ad_generate(client->data, len);
+@@ -795,6 +823,7 @@ static uint8_t *generate_scan_rsp(struct btd_adv_client *client,
+ 						uint32_t *flags, size_t *len)
+ {
+ 	if (!client->name) {
++		bt_ad_clear_name(client->scan);
+ 		*len = 0;
+ 		return NULL;
+ 	}
+-- 
+2.56.0.506.g506a7eabc5-goog
+
