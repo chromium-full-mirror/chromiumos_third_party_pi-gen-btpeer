@@ -14,6 +14,31 @@
 # Enforce /etc permissions are 755 to prevent PulseAudio startup failures.
 chmod 755 "${ROOTFS_DIR}/etc"
 
+if grep -rnEi '^License:.*\b(AGPL|Affero)\b' \
+  "${ROOTFS_DIR}/usr/share/doc/"*/copyright; then
+  echo "Error: unexpected package detected in rootfs" >&2
+  exit 1
+fi
+
+while IFS=$'\t' read -r status pkg section; do
+  if [[ "${status}" != "installed" ]]; then
+    continue
+  fi
+  if [[ "${section}" =~ ^(non-free|non-free-firmware|contrib)(/|$) ]]; then
+    case "${pkg}" in
+      bluez-firmware|raspi-firmware)
+        ;;
+      *)
+        echo "Error: unexpected ${section} package '${pkg}' installed" >&2
+        exit 1
+        ;;
+    esac
+  fi
+done < <(
+  dpkg-query --admindir="${ROOTFS_DIR}/var/lib/dpkg" \
+    -W -f='${db:Status-Status}\t${Package}\t${Section}\n'
+)
+
 echo "Copying final build info file to deploy dir"
 DEPLOY_DIR="/pi-gen/deploy"
 cp "${ROOTFS_DIR}/${BUILD_INFO_FILE_PATH}" "${DEPLOY_DIR}"
