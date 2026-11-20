@@ -8,6 +8,7 @@ python3-dbus
 python3-numpy
 python3-pexpect
 python3-pyudev
+python3-serial
 git
 libatlas-base-dev
 bluez-firmware
