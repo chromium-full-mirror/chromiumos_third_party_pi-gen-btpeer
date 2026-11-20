@@ -1,0 +1,59 @@
+From: Jason Stanko <jstanko@google.com>
+Date: Fri, 20 Nov 2026 02:42:00 +0000
+Subject: [PATCH] profile: Cap oFono HFP HF version to 1.6
+
+Debian Bookworm's oFono 1.31 reads the negotiated HFP profile version
+from BlueZ's Profile1.NewConnection properties. When the peer advertises
+HFP 1.7 (0x0107), oFono sets HFP_HF_FEATURE_HF_INDICATORS (AT+BRSF=511),
+but its cmer_cb() in drivers/hfpmodem/slc.c only checks for 3-way
+calling and jumps straight to slc_established() without sending AT+BIND
+when the AG does not advertise 3-way calling. Floss strictly waits for
+AT+BIND when both sides negotiate HF Indicators and times out SLC setup
+after 5 seconds.
+
+Cap oFono's external HFP HF profile (/bluetooth/profile/hfp_hf) to HFP
+1.6 (0x0106) on registration and in send_new_connection(). This keeps
+stock Debian oFono 1.31 negotiating HFP 1.6 (AT+BRSF=255, with WBS mSBC
+intact) while leaving PipeWire's HFP 1.9 SWB profile (/Profile/HFPHF)
+untouched.
+---
+ src/profile.c | 20 ++++++++++++++++++++
+ 1 file changed, 20 insertions(+)
+
+--- a/src/profile.c
++++ b/src/profile.c
+@@ -1050,6 +1050,13 @@ static bool send_new_connection(struct ext_profile *ext, struct ext_io *conn)
+ 		}
+ 	}
+ 
++	if (!g_strcmp0(ext->path, "/bluetooth/profile/hfp_hf") &&
++			ext->version && conn->version > ext->version) {
++		DBG("Capping %s peer version from 0x%04x to 0x%04x",
++			ext->path, conn->version, ext->version);
++		conn->version = ext->version;
++	}
++
+ 	dbus_message_iter_init_append(msg, &iter);
+ 
+ 	path = device_get_path(conn->device);
+@@ -2375,6 +2382,19 @@ static struct ext_profile *create_ext(const char *owner, const char *path,
+ 		dbus_message_iter_next(opts);
+ 	}
+ 
++	/* Debian Bookworm's oFono 1.31 advertises HFP 1.7 (HF Indicators) in
++	 * AT+BRSF=511 when negotiated with version 0x0107, but its cmer_cb()
++	 * skips AT+BIND when the AG does not support 3-way calling, causing
++	 * Floss to time out SLC setup. Cap oFono's HFP HF profile to 1.6
++	 * without affecting PipeWire (/Profile/HFPHF) HFP 1.9 SWB.
++	 */
++	if (!g_strcmp0(ext->path, "/bluetooth/profile/hfp_hf") &&
++			ext->version > 0x0106) {
++		info("Capping %s HFP version from 0x%04x to 0x0106",
++			ext->path, ext->version);
++		ext->version = 0x0106;
++	}
++
+ 	if (!ext->service)
+ 		set_service(ext);
+ 
+-- 
